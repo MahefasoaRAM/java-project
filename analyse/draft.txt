@@ -1,0 +1,63 @@
+1- Probleme:
+- difficultés de suivi des emprunts
+- pertes de livres non retournés
+- absence de visibilité sur la disponibilité des ouvrages
+- manque de traçabilité des utilisateurs.
+
+Analyse des problemes et formulation des besoins:
+
+a) Difficultés de suivi des emprunts:
+il faut que les emprunts soit parcourables et visible facilement (Page emprunts)
+
+b) Pertes de livres non retournés:
+il faut avoir une date limite d'emprunts pour savoir quand un emprunts est en retard, le nom du livre et emprunteur doivent etre present pour faciliter le suivit. (informations livre)
+
+c) Absence de visibilité sur la disponibilité des ouvrages:
+Ils faut un gestion des stocks des livres dont un etat emprunter ou libre, pour facilement suivre quelle livre et exemplaire sont disponnible (Page disponibilité)
+
+d) Manque de traçabilité des utilisateurs.
+Les informations des utilisateurs  doivent etre complet et avoir tout les informations, un utilisateur doit toujours etre lieer a un emprunt
+
+2- objectif:
+- gérer des livres
+- gérer des utilisateurs
+- gérer les emprunts et retours de livres
+- garantir la cohérence des données métier.
+
+Realisation des objectif:
+a) gérer des livres:
+Page livre (insertion, modification, et suppression)
+
+b) gérer des utilisateurs:
+Page Adhesion, gestion inscription
+
+c) gérer les emprunts et retours de livres:
+Formulaire d'emprunt avec validation, Suivie de livre en retard, et Formulaire de retour d'emprunt.
+
+d) garantir la cohérence des données métier:
+Assurer les emprunts, livre, et utilisateur suive une logique precise
+
+3- Acteurs du système:
+Nous avons 2 utilisateur:
+- Utilisateur
+- Administrateur
+
+a) Utilisateur:
+Doit uniquement pouvoir naviguer sur le catalogue, et faire des demandes d'emprunts
+
+b) Administrateur:
+Doit gerer livre, emprunt, et catalogue.
+
+4- Fonctionnalités:
+- gestion de livre
+- gestion utilisateur
+- gestion emprunts
+
+5- regles gestion:
+- un livre ne peut être emprunté que s’il est disponible ;
+- un livre ne peut être emprunté que par un seul utilisateur à la fois ;
+- un utilisateur peut emprunter plusieurs livres simultanément ;
+- un emprunt retourné rend automatiquement le livre disponible ;
+- un emprunt ne peut pas être créé pour un utilisateur ou un livre inexistant ;
+- un livre supprimé ne doit pas avoir d’emprunts en cours.
+
