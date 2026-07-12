@@ -1,0 +1,78 @@
+sequenceDiagram
+    actor Admin
+
+    %% ─────────────────────────────────────────────
+    %% CAS 1 : Ajouter un livre
+    %% ─────────────────────────────────────────────
+    participant LivreController
+    participant LivreService
+    participant LivreRepository
+
+    Admin->>LivreController: POST /api/livres { titre, auteur, categorie }
+    LivreController->>LivreService: ajouterLivre(livreDTO)
+    LivreService->>LivreRepository: save(newLivre)
+    LivreRepository-->>LivreService: LivreDTO
+    LivreService-->>LivreController: LivreDTO
+    LivreController-->>Admin: 201 Created { livreDTO }
+
+    %% ─────────────────────────────────────────────
+    %% CAS 2 : Modifier un livre
+    %% ─────────────────────────────────────────────
+    Admin->>LivreController: PUT /api/livres/{id} { titre, auteur, categorie }
+    LivreController->>LivreService: modifierLivre(id, livreDTO)
+    LivreService->>LivreRepository: findById(id)
+    LivreRepository-->>LivreService: Livre | NotFoundException
+
+    alt Livre introuvable
+        LivreService-->>LivreController: LivreNotFoundException
+        LivreController-->>Admin: 404 Not Found
+    else Livre trouvé
+        LivreService->>LivreRepository: save(livreModifie)
+        LivreRepository-->>LivreService: LivreDTO
+        LivreService-->>LivreController: LivreDTO
+        LivreController-->>Admin: 200 OK { livreDTO }
+    end
+
+    %% ─────────────────────────────────────────────
+    %% CAS 3 : Supprimer un livre (RG-06)
+    %% ─────────────────────────────────────────────
+    participant EmpruntRepository
+
+    Admin->>LivreController: DELETE /api/livres/{id}
+    LivreController->>LivreService: supprimerLivre(id)
+    LivreService->>LivreRepository: findById(id)
+    LivreRepository-->>LivreService: Livre | NotFoundException
+
+    LivreService->>EmpruntRepository: existsByLivreIdAndStatut(id, EN_COURS)
+    EmpruntRepository-->>LivreService: true | false
+
+    alt Emprunt en cours sur ce livre
+        LivreService-->>LivreController: LivreEmprunteException
+        LivreController-->>Admin: 409 Conflict { message: "Livre avec emprunts en cours" }
+    else Aucun emprunt en cours
+        LivreService->>LivreRepository: deleteById(id)
+        LivreService-->>LivreController: void
+        LivreController-->>Admin: 204 No Content
+    end
+
+    %% ─────────────────────────────────────────────
+    %% CAS 4 : Gérer les utilisateurs
+    %% ─────────────────────────────────────────────
+    participant UtilisateurController
+    participant UtilisateurService
+    participant UtilisateurRepository
+
+    Admin->>UtilisateurController: POST /api/utilisateurs { nom, email, role }
+    UtilisateurController->>UtilisateurService: ajouterUtilisateur(utilisateurDTO)
+    UtilisateurService->>UtilisateurRepository: existsByEmail(email)
+    UtilisateurRepository-->>UtilisateurService: true | false
+
+    alt Email déjà utilisé
+        UtilisateurService-->>UtilisateurController: EmailDejaUtiliseException
+        UtilisateurController-->>Admin: 409 Conflict { message: "Email déjà utilisé" }
+    else Email disponible
+        UtilisateurService->>UtilisateurRepository: save(newUtilisateur)
+        UtilisateurRepository-->>UtilisateurService: UtilisateurDTO
+        UtilisateurService-->>UtilisateurController: UtilisateurDTO
+        UtilisateurController-->>Admin: 201 Created { utilisateurDTO }
+    end

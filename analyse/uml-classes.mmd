@@ -15,9 +15,11 @@ classDiagram
         +Long id
         +String nom
         +String email
+        +Role role
         +getId() Long
         +getNom() String
         +getEmail() String
+        +getRole() Role
     }
 
     class Emprunt {
@@ -36,6 +38,40 @@ classDiagram
         TERMINE
     }
 
+    class Role {
+        <<enumeration>>
+        UTILISATEUR
+        ADMINISTRATEUR
+    }
+
+    class LivreService {
+        <<interface>>
+        +ajouterLivre(LivreDTO) LivreDTO
+        +modifierLivre(Long, LivreDTO) LivreDTO
+        +supprimerLivre(Long) void
+        +getLivres() List~LivreDTO~
+        +getLivreById(Long) LivreDTO
+    }
+
+    class UtilisateurService {
+        <<interface>>
+        +ajouterUtilisateur(UtilisateurDTO) UtilisateurDTO
+        +modifierUtilisateur(Long, UtilisateurDTO) UtilisateurDTO
+        +supprimerUtilisateur(Long) void
+        +getUtilisateurs() List~UtilisateurDTO~
+    }
+
+    class EmpruntService {
+        <<interface>>
+        +emprunterLivre(EmpruntDTO) EmpruntDTO
+        +retournerLivre(Long) EmpruntDTO
+        +getEmpruntsEnCours() List~EmpruntDTO~
+    }
+
     Emprunt "many" --> "1" Utilisateur : emprunteur
     Emprunt "many" --> "1" Livre : livre
     Emprunt --> StatutEmprunt
+    Utilisateur --> Role
+    LivreService ..> Livre : gère
+    UtilisateurService ..> Utilisateur : gère
+    EmpruntService ..> Emprunt : gère

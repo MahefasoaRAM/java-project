@@ -155,9 +155,11 @@ classDiagram
         +Long id
         +String nom
         +String email
+        +Role role
         +getId() Long
         +getNom() String
         +getEmail() String
+        +getRole() Role
     }
 
     class Emprunt {
@@ -176,9 +178,43 @@ classDiagram
         TERMINE
     }
 
+    class Role {
+        <<enumeration>>
+        UTILISATEUR
+        ADMINISTRATEUR
+    }
+
+    class LivreService {
+        <<interface>>
+        +ajouterLivre(LivreDTO) LivreDTO
+        +modifierLivre(Long, LivreDTO) LivreDTO
+        +supprimerLivre(Long) void
+        +getLivres() List~LivreDTO~
+        +getLivreById(Long) LivreDTO
+    }
+
+    class UtilisateurService {
+        <<interface>>
+        +ajouterUtilisateur(UtilisateurDTO) UtilisateurDTO
+        +modifierUtilisateur(Long, UtilisateurDTO) UtilisateurDTO
+        +supprimerUtilisateur(Long) void
+        +getUtilisateurs() List~UtilisateurDTO~
+    }
+
+    class EmpruntService {
+        <<interface>>
+        +emprunterLivre(EmpruntDTO) EmpruntDTO
+        +retournerLivre(Long) EmpruntDTO
+        +getEmpruntsEnCours() List~EmpruntDTO~
+    }
+
     Emprunt "many" --> "1" Utilisateur : emprunteur
     Emprunt "many" --> "1" Livre : livre
     Emprunt --> StatutEmprunt
+    Utilisateur --> Role
+    LivreService ..> Livre : gère
+    UtilisateurService ..> Utilisateur : gère
+    EmpruntService ..> Emprunt : gère
 ```
 
 ---
@@ -218,7 +254,63 @@ sequenceDiagram
 
 ---
 
-### 5.4 Diagramme de séquence – Retourner un livre
+### 5.4 Diagramme de séquence – Actions Administrateur (livres & utilisateurs)
+
+```mermaid
+sequenceDiagram
+    actor Admin
+
+    participant LivreController
+    participant LivreService
+    participant LivreRepository
+
+    Admin->>LivreController: POST /api/livres { titre, auteur, categorie }
+    LivreController->>LivreService: ajouterLivre(livreDTO)
+    LivreService->>LivreRepository: save(newLivre)
+    LivreRepository-->>LivreService: LivreDTO
+    LivreService-->>LivreController: LivreDTO
+    LivreController-->>Admin: 201 Created { livreDTO }
+
+    Admin->>LivreController: DELETE /api/livres/{id}
+    LivreController->>LivreService: supprimerLivre(id)
+    LivreService->>LivreRepository: findById(id)
+    LivreRepository-->>LivreService: Livre | NotFoundException
+
+    participant EmpruntRepository
+    LivreService->>EmpruntRepository: existsByLivreIdAndStatut(id, EN_COURS)
+    EmpruntRepository-->>LivreService: true | false
+
+    alt Emprunt en cours sur ce livre
+        LivreService-->>LivreController: LivreEmprunteException
+        LivreController-->>Admin: 409 Conflict { message: "Livre avec emprunts en cours" }
+    else Aucun emprunt en cours
+        LivreService->>LivreRepository: deleteById(id)
+        LivreController-->>Admin: 204 No Content
+    end
+
+    participant UtilisateurController
+    participant UtilisateurService
+    participant UtilisateurRepository
+
+    Admin->>UtilisateurController: POST /api/utilisateurs { nom, email, role }
+    UtilisateurController->>UtilisateurService: ajouterUtilisateur(utilisateurDTO)
+    UtilisateurService->>UtilisateurRepository: existsByEmail(email)
+    UtilisateurRepository-->>UtilisateurService: true | false
+
+    alt Email déjà utilisé
+        UtilisateurService-->>UtilisateurController: EmailDejaUtiliseException
+        UtilisateurController-->>Admin: 409 Conflict { message: "Email déjà utilisé" }
+    else Email disponible
+        UtilisateurService->>UtilisateurRepository: save(newUtilisateur)
+        UtilisateurRepository-->>UtilisateurService: UtilisateurDTO
+        UtilisateurService-->>UtilisateurController: UtilisateurDTO
+        UtilisateurController-->>Admin: 201 Created { utilisateurDTO }
+    end
+```
+
+---
+
+### 5.5 Diagramme de séquence – Retourner un livre
 
 ```mermaid
 sequenceDiagram
