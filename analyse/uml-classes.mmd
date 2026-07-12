@@ -1,0 +1,41 @@
+classDiagram
+    class Livre {
+        +Long id
+        +String titre
+        +String auteur
+        +String categorie
+        +boolean disponible
+        +getId() Long
+        +getTitre() String
+        +isDisponible() boolean
+        +setDisponible(boolean)
+    }
+
+    class Utilisateur {
+        +Long id
+        +String nom
+        +String email
+        +getId() Long
+        +getNom() String
+        +getEmail() String
+    }
+
+    class Emprunt {
+        +Long id
+        +LocalDate dateEmprunt
+        +LocalDate dateRetourPrevue
+        +StatutEmprunt statut
+        +getId() Long
+        +getStatut() StatutEmprunt
+        +setStatut(StatutEmprunt)
+    }
+
+    class StatutEmprunt {
+        <<enumeration>>
+        EN_COURS
+        TERMINE
+    }
+
+    Emprunt "many" --> "1" Utilisateur : emprunteur
+    Emprunt "many" --> "1" Livre : livre
+    Emprunt --> StatutEmprunt

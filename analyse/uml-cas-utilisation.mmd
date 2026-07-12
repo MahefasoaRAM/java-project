@@ -1,0 +1,26 @@
+flowchart LR
+    Utilisateur(["👤 Utilisateur"])
+    Admin(["👤 Administrateur"])
+
+    subgraph Système_Médiathèque["Système Médiathèque"]
+        direction TB
+        UC1["Consulter le catalogue"]
+        UC2["Emprunter un livre"]
+        UC3["Retourner un livre"]
+        UC4["Ajouter un livre"]
+        UC5["Modifier un livre"]
+        UC6["Supprimer un livre"]
+        UC7["Consulter les emprunts"]
+        UC8["Gérer les utilisateurs"]
+    end
+
+    Utilisateur --> UC1
+    Utilisateur --> UC2
+    Utilisateur --> UC3
+
+    Admin --> UC1
+    Admin --> UC4
+    Admin --> UC5
+    Admin --> UC6
+    Admin --> UC7
+    Admin --> UC8
