@@ -1,0 +1,28 @@
+sequenceDiagram
+    actor Client
+    participant EmpruntController
+    participant EmpruntService
+    participant LivreRepository
+    participant UtilisateurRepository
+    participant EmpruntRepository
+
+    Client->>EmpruntController: POST /api/emprunts { livreId, utilisateurId, dateRetourPrevue }
+
+    EmpruntController->>EmpruntService: emprunterLivre(dto)
+
+    EmpruntService->>UtilisateurRepository: findById(utilisateurId)
+    UtilisateurRepository-->>EmpruntService: Utilisateur | NotFoundException
+
+    EmpruntService->>LivreRepository: findById(livreId)
+    LivreRepository-->>EmpruntService: Livre | NotFoundException
+
+    alt Livre indisponible
+        EmpruntService-->>EmpruntController: LivreIndisponibleException
+        EmpruntController-->>Client: 409 Conflict { message: "Livre indisponible" }
+    else Livre disponible
+        EmpruntService->>LivreRepository: save(livre.setDisponible(false))
+        EmpruntService->>EmpruntRepository: save(newEmprunt)
+        EmpruntRepository-->>EmpruntService: EmpruntDTO
+        EmpruntService-->>EmpruntController: EmpruntDTO
+        EmpruntController-->>Client: 201 Created { empruntDTO }
+    end
