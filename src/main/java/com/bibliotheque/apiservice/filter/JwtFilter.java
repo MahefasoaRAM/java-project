@@ -1,8 +1,10 @@
 package com.bibliotheque.apiservice.filter;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -11,6 +13,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.bibliotheque.apiservice.service.JwtService;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -44,10 +47,15 @@ public class JwtFilter extends OncePerRequestFilter {
     if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
       UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
       if (jwtService.validateToken(jwt, userDetails)) {
+        Claims claims = jwtService.extractAllClaims(jwt);
+        String role = claims.get("role", String.class);
+        List<SimpleGrantedAuthority> authorities = role != null
+            ? List.of(new SimpleGrantedAuthority("ROLE_" + role))
+            : List.of();
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
             userDetails,
             null,
-            userDetails.getAuthorities());
+            authorities);
         SecurityContextHolder.getContext().setAuthentication(authToken);
       }
     }
