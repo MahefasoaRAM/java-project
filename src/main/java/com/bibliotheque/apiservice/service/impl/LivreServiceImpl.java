@@ -6,9 +6,11 @@ import org.springframework.stereotype.Service;
 
 import com.bibliotheque.apiservice.dto.LivreDTO;
 import com.bibliotheque.apiservice.entity.Livre;
+import com.bibliotheque.apiservice.enums.EmpruntStatus;
 import com.bibliotheque.apiservice.exception.DataConflictException;
 import com.bibliotheque.apiservice.exception.ResourceNotFoundException;
 import com.bibliotheque.apiservice.mapper.LivreMapper;
+import com.bibliotheque.apiservice.repository.EmpruntRepository;
 import com.bibliotheque.apiservice.repository.LivreRepository;
 import com.bibliotheque.apiservice.request.LivreRequest;
 import com.bibliotheque.apiservice.service.LivreService;
@@ -19,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LivreServiceImpl implements LivreService {
   private final LivreRepository livreRepository;
+  private final EmpruntRepository empruntRepository;
   private final LivreMapper livreMapper;
 
   @Override
@@ -96,6 +99,9 @@ public class LivreServiceImpl implements LivreService {
   public void deleteLivre(Long id) {
     Livre existingLivre = livreRepository.findByIdAndDeletedFalse(id)
         .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + id));
+    if (empruntRepository.existsByLivreIdAndStatut(id, EmpruntStatus.EN_COURS)) {
+      throw new DataConflictException("Cannot delete book with active loans: " + existingLivre.getTitre());
+    }
     existingLivre.setDeleted(true);
     livreRepository.save(existingLivre);
   }
