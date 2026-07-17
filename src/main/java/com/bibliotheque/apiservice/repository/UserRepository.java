@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.bibliotheque.apiservice.entity.User;
+import com.bibliotheque.apiservice.enums.RoleUser;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -13,7 +14,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
   List<User> findByDeletedFalse();
 
-  List<User> findByRoleAndDeletedFalse(String role);
+  List<User> findByRoleAndDeletedFalse(RoleUser role);
 
   Optional<User> findByIdAndDeletedFalse(Long id);
 }

@@ -1,5 +1,7 @@
 package com.bibliotheque.apiservice.request;
 
+import com.bibliotheque.apiservice.enums.RoleUser;
+
 import lombok.Data;
 
 @Data
@@ -10,7 +12,7 @@ public class UserRequest {
 
   private String password;
 
-  private String role;
+  private RoleUser role;
 
   private boolean deleted = false;
 }
