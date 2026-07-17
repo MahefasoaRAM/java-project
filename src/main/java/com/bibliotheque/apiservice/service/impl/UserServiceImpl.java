@@ -42,7 +42,7 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public List<UserDTO> getAllUsersByRole(RoleUser roleUser) {
-    List<User> users = userRepository.findByRoleAndDeletedFalse(roleUser.name());
+    List<User> users = userRepository.findByRoleAndDeletedFalse(roleUser);
     return users.stream().map(userMapper::toDTO).toList();
   }
 
