@@ -34,6 +34,8 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, "/api/livres/**").hasRole("ADMIN")
             .requestMatchers(HttpMethod.PUT, "/api/livres/**").hasRole("ADMIN")
             .requestMatchers(HttpMethod.DELETE, "/api/livres/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.GET, "/api/emprunts").hasRole("ADMIN")
+            .requestMatchers("/api/emprunts/**").authenticated()
             .anyRequest().authenticated())
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
