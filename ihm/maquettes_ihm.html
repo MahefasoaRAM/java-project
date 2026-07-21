@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Maquettes IHM — Médiathèque Numérique</title>
+<style>
+  :root{
+    --line:#333;
+    --bg:#f4f4f2;
+    --card:#ffffff;
+    --field:#eaeaea;
+    --btn:#d8d8d8;
+    --btn-primary:#bfbfbf;
+    --ok:#e6f4ea;
+    --ok-line:#2e7d32;
+    --err:#fdecea;
+    --err-line:#c62828;
+    --muted:#666;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family: 'Courier New', monospace;
+    background:var(--bg);
+    color:var(--line);
+    margin:0;
+    padding:24px;
+  }
+  h1{
+    text-align:center;
+    letter-spacing:2px;
+    border-bottom:3px solid var(--line);
+    padding-bottom:12px;
+    margin-bottom:4px;
+  }
+  .subtitle{
+    text-align:center;
+    color:var(--muted);
+    margin-bottom:36px;
+    font-size:14px;
+  }
+  .module{
+    margin-bottom:48px;
+  }
+  .module-title{
+    background:var(--line);
+    color:#fff;
+    padding:8px 14px;
+    display:inline-block;
+    font-size:15px;
+    letter-spacing:1px;
+    margin-bottom:18px;
+  }
+  .screens{
+    display:flex;
+    flex-wrap:wrap;
+    gap:24px;
+  }
+  .screen{
+    background:var(--card);
+    border:2px solid var(--line);
+    width:360px;
+    padding:0;
+    flex-shrink:0;
+  }
+  .screen-header{
+    border-bottom:2px solid var(--line);
+    padding:8px 12px;
+    font-weight:bold;
+    font-size:13px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .screen-header .role{
+    font-size:10px;
+    color:var(--muted);
+    font-weight:normal;
+    border:1px solid var(--muted);
+    padding:1px 6px;
+  }
+  .screen-body{
+    padding:14px;
+  }
+  .field-label{
+    font-size:11px;
+    color:var(--muted);
+    margin-bottom:2px;
+  }
+  .field{
+    border:1px dashed var(--line);
+    background:var(--field);
+    height:28px;
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    padding:0 8px;
+    font-size:11px;
+    color:var(--muted);
+  }
+  .field.select::after{
+    content:"▾";
+    margin-left:auto;
+  }
+  .field.readonly{
+    background:#f0f0f0;
+    border-style:dotted;
+  }
+  .required::after{
+    content:" *";
+    color:var(--err-line);
+  }
+  .btn-row{
+    display:flex;
+    gap:8px;
+    margin-top:14px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    border:2px solid var(--line);
+    background:var(--btn);
+    padding:7px 14px;
+    font-size:11px;
+    font-weight:bold;
+    text-align:center;
+  }
+  .btn.primary{
+    background:var(--btn-primary);
+    box-shadow: 2px 2px 0 var(--line);
+  }
+  .btn.danger{
+    border-color:var(--err-line);
+    color:var(--err-line);
+  }
+  .msg{
+    margin-top:12px;
+    padding:8px 10px;
+    font-size:11px;
+    border-left:4px solid;
+  }
+  .msg.ok{
+    background:var(--ok);
+    border-color:var(--ok-line);
+    color:#1b5e20;
+  }
+  .msg.err{
+    background:var(--err);
+    border-color:var(--err-line);
+    color:#8e1c1c;
+  }
+  table.wire{
+    width:100%;
+    border-collapse:collapse;
+    font-size:10.5px;
+    margin-top:6px;
+  }
+  table.wire th, table.wire td{
+    border:1px solid var(--line);
+    padding:5px 6px;
+    text-align:left;
+  }
+  table.wire th{
+    background:#e4e4e4;
+  }
+  .row-actions{
+    display:flex;
+    gap:4px;
+  }
+  .row-actions span{
+    border:1px solid var(--line);
+    padding:1px 4px;
+    font-size:9px;
+  }
+  .search-bar{
+    border:1px dashed var(--line);
+    background:var(--field);
+    height:24px;
+    margin-bottom:8px;
+    font-size:10px;
+    display:flex;
+    align-items:center;
+    padding:0 6px;
+    color:var(--muted);
+  }
+  .note{
+    font-size:10px;
+    color:var(--muted);
+    margin-top:8px;
+    font-style:italic;
+  }
+  .modal-overlay{
+    background:#00000010;
+    padding:10px;
+  }
+  .legend{
+    max-width:900px;
+    margin:0 auto 40px auto;
+    font-size:12px;
+    background:#fff;
+    border:1px solid var(--line);
+    padding:14px 18px;
+  }
+  .legend b{display:block;margin-bottom:6px;}
+  .legend-item{display:inline-block;margin-right:18px;}
+  .swatch{display:inline-block;width:12px;height:12px;margin-right:4px;vertical-align:middle;}
+</style>
+</head>
+<body>
+
+<h1>MÉDIATHÈQUE NUMÉRIQUE — MAQUETTES IHM</h1>
+<div class="subtitle">Mini-projet Java Spring Boot — Sprint 1 : Analyse et Conception — Wireframes basse-fidélité</div>
+
+<div class="legend">
+  <b>Légende</b>
+  <span class="legend-item"><span class="swatch" style="background:var(--field);border:1px dashed var(--line)"></span>Champ de saisie</span>
+  <span class="legend-item"><span class="swatch" style="background:var(--btn-primary);border:2px solid var(--line)"></span>Bouton d'action principale</span>
+  <span class="legend-item"><span class="swatch" style="background:var(--btn);border:2px solid var(--line)"></span>Bouton secondaire</span>
+  <span class="legend-item"><span class="swatch" style="background:var(--ok);border:1px solid var(--ok-line)"></span>Message de succès</span>
+  <span class="legend-item"><span class="swatch" style="background:var(--err);border:1px solid var(--err-line)"></span>Message d'erreur</span>
+  <span class="legend-item">* = champ obligatoire</span>
+</div>
+
+<!-- ============ MODULE LIVRES ============ -->
+<div class="module">
+  <div class="module-title">1. GESTION DES LIVRES (Administrateur)</div>
+  <div class="screens">
+
+    <!-- Ecran Liste des livres -->
+    <div class="screen">
+      <div class="screen-header">Écran — Liste des livres <span class="role">Admin</span></div>
+      <div class="screen-body">
+        <div class="search-bar">🔍 Rechercher par titre / auteur...</div>
+        <div class="btn-row" style="margin-top:0;margin-bottom:10px;">
+          <div class="btn primary">+ Ajouter un livre</div>
+        </div>
+        <table class="wire">
+          <tr><th>Titre</th><th>Auteur</th><th>Catégorie</th><th>Statut</th><th>Actions</th></tr>
+          <tr><td>Le Petit Prince</td><td>Saint-Exupéry</td><td>Roman</td><td>Disponible</td>
+            <td class="row-actions"><span>Voir</span><span>Modifier</span><span>Suppr.</span></td></tr>
+          <tr><td>1984</td><td>G. Orwell</td><td>SF</td><td>Emprunté</td>
+            <td class="row-actions"><span>Voir</span><span>Modifier</span><span>Suppr.</span></td></tr>
+        </table>
+        <div class="note">Message si liste vide : « Aucun livre trouvé »</div>
+      </div>
+    </div>
+
+    <!-- Ecran Détail livre -->
+    <div class="screen">
+      <div class="screen-header">Écran — Détail d'un livre <span class="role">Admin</span></div>
+      <div class="screen-body">
+        <div class="field-label">Titre</div>
+        <div class="field readonly">Le Petit Prince</div>
+        <div class="field-label">Auteur</div>
+        <div class="field readonly">Antoine de Saint-Exupéry</div>
+        <div class="field-label">Catégorie</div>
+        <div class="field readonly">Roman</div>
+        <div class="field-label">Statut de disponibilité</div>
+        <div class="field readonly">Disponible</div>
+        <div class="btn-row">
+          <div class="btn">Modifier</div>
+          <div class="btn danger">Supprimer</div>
+          <div class="btn">&larr; Retour à la liste</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ecran Ajouter livre -->
+    <div class="screen">
+      <div class="screen-header">Écran — Ajouter un livre <span class="role">Admin</span></div>
+      <div class="screen-body">
+        <div class="field-label required">Titre</div>
+        <div class="field">saisir le titre...</div>
+        <div class="field-label required">Auteur</div>
+        <div class="field">saisir l'auteur...</div>
+        <div class="field-label required">Catégorie</div>
+        <div class="field select">choisir une catégorie</div>
+        <div class="field-label">Statut de disponibilité</div>
+        <div class="field readonly">Disponible (par défaut)</div>
+        <div class="btn-row">
+          <div class="btn primary">Enregistrer</div>
+          <div class="btn">Annuler</div>
+        </div>
+        <div class="msg ok">✔ Livre ajouté avec succès</div>
+        <div class="msg err">✘ Veuillez remplir tous les champs obligatoires</div>
+      </div>
+    </div>
+
+    <!-- Ecran Modifier livre -->
+    <div class="screen">
+      <div class="screen-header">Écran — Modifier un livre <span class="role">Admin</span></div>
+      <div class="screen-body">
+        <div class="field-label required">Titre</div>
+        <div class="field">Le Petit Prince</div>
+        <div class="field-label required">Auteur</div>
+        <div class="field">Antoine de Saint-Exupéry</div>
+        <div class="field-label required">Catégorie</div>
+        <div class="field select">Roman</div>
+        <div class="btn-row">
+          <div class="btn primary">Enregistrer les modifications</div>
+          <div class="btn">Annuler</div>
+        </div>
+        <div class="msg ok">✔ Livre modifié avec succès</div>
+        <div class="msg err">✘ Erreur lors de la modification</div>
+      </div>
+    </div>
+
+    <!-- Ecran Confirmation suppression livre -->
+    <div class="screen">
+      <div class="screen-header">Boîte de dialogue — Confirmation de suppression <span class="role">Admin</span></div>
+      <div class="screen-body modal-overlay">
+        <div style="font-size:12px;margin-bottom:14px;">⚠ Voulez-vous vraiment supprimer le livre « Le Petit Prince » ?</div>
+        <div class="btn-row">
+          <div class="btn danger">Confirmer</div>
+          <div class="btn">Annuler</div>
+        </div>
+        <div class="msg ok">✔ Livre supprimé avec succès</div>
+        <div class="msg err">✘ Suppression impossible : ce livre a un emprunt en cours</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ MODULE UTILISATEURS ============ -->
+<div class="module">
+  <div class="module-title">2. GESTION DES UTILISATEURS (Administrateur)</div>
+  <div class="screens">
+
+    <!-- Liste utilisateurs -->
+    <div class="screen">
+      <div class="screen-header">Écran — Liste des utilisateurs <span class="role">Admin</span></div>
+      <div class="screen-body">
+        <div class="search-bar">🔍 Rechercher par nom / email...</div>
+        <div class="btn-row" style="margin-top:0;margin-bottom:10px;">
+          <div class="btn primary">+ Ajouter un utilisateur</div>
+        </div>
+        <table class="wire">
+          <tr><th>Nom</th><th>Email</th><th>Actions</th></tr>
+          <tr><td>Rakoto Jean</td><td>rakoto.j@mail.mg</td>
+            <td class="row-actions"><span>Modifier</span><span>Suppr.</span></td></tr>
+          <tr><td>Rasoa Anna</td><td>rasoa.a@mail.mg</td>
+            <td class="row-actions"><span>Modifier</span><span>Suppr.</span></td></tr>
+        </table>
+        <div class="note">Message si liste vide : « Aucun utilisateur trouvé »</div>
+      </div>
+    </div>
+
+    <!-- Ajouter utilisateur -->
+    <div class="screen">
+      <div class="screen-header">Écran — Ajouter un utilisateur <span class="role">Admin</span></div>
+      <div class="screen-body">
+        <div class="field-label required">Nom</div>
+        <div class="field">saisir le nom...</div>
+        <div class="field-label required">Email</div>
+        <div class="field">saisir l'email...</div>
+        <div class="btn-row">
+          <div class="btn primary">Enregistrer</div>
+          <div class="btn">Annuler</div>
+        </div>
+        <div class="msg ok">✔ Utilisateur ajouté avec succès</div>
+        <div class="msg err">✘ Email invalide ou déjà utilisé</div>
+      </div>
+    </div>
+
+    <!-- Modifier utilisateur -->
+    <div class="screen">
+      <div class="screen-header">Écran — Modifier un utilisateur <span class="role">Admin</span></div>
+      <div class="screen-body">
+        <div class="field-label required">Nom</div>
+        <div class="field">Rakoto Jean</div>
+        <div class="field-label required">Email</div>
+        <div class="field">rakoto.j@mail.mg</div>
+        <div class="btn-row">
+          <div class="btn primary">Enregistrer les modifications</div>
+          <div class="btn">Annuler</div>
+        </div>
+        <div class="msg ok">✔ Utilisateur modifié avec succès</div>
+        <div class="msg err">✘ Erreur lors de la modification</div>
+      </div>
+    </div>
+
+    <!-- Confirmation suppression utilisateur -->
+    <div class="screen">
+      <div class="screen-header">Boîte de dialogue — Confirmation de suppression <span class="role">Admin</span></div>
+      <div class="screen-body modal-overlay">
+        <div style="font-size:12px;margin-bottom:14px;">⚠ Voulez-vous vraiment supprimer l'utilisateur « Rakoto Jean » ?</div>
+        <div class="btn-row">
+          <div class="btn danger">Confirmer</div>
+          <div class="btn">Annuler</div>
+        </div>
+        <div class="msg ok">✔ Utilisateur supprimé avec succès</div>
+        <div class="msg err">✘ Suppression impossible : cet utilisateur a des emprunts en cours</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ MODULE EMPRUNTS ============ -->
+<div class="module">
+  <div class="module-title">3. GESTION DES EMPRUNTS (Utilisateur / Administrateur)</div>
+  <div class="screens">
+
+    <!-- Emprunter un livre -->
+    <div class="screen">
+      <div class="screen-header">Écran — Emprunter un livre <span class="role">Utilisateur</span></div>
+      <div class="screen-body">
+        <div class="field-label required">Utilisateur</div>
+        <div class="field select">Rakoto Jean</div>
+        <div class="field-label required">Livre (disponibles uniquement)</div>
+        <div class="field select">Le Petit Prince</div>
+        <div class="field-label">Date d'emprunt</div>
+        <div class="field readonly">20/07/2026 (auto)</div>
+        <div class="field-label required">Date de retour prévue</div>
+        <div class="field">📅 jj/mm/aaaa</div>
+        <div class="btn-row">
+          <div class="btn primary">Emprunter</div>
+          <div class="btn">Annuler</div>
+        </div>
+        <div class="msg ok">✔ Emprunt enregistré avec succès</div>
+        <div class="msg err">✘ Ce livre n'est pas disponible</div>
+      </div>
+    </div>
+
+    <!-- Retourner un livre -->
+    <div class="screen">
+      <div class="screen-header">Écran — Retourner un livre <span class="role">Utilisateur / Admin</span></div>
+      <div class="screen-body">
+        <div class="field-label required">Sélectionner l'emprunt</div>
+        <div class="field select">Rakoto Jean — Le Petit Prince</div>
+        <div class="field-label">Utilisateur</div>
+        <div class="field readonly">Rakoto Jean</div>
+        <div class="field-label">Livre</div>
+        <div class="field readonly">Le Petit Prince</div>
+        <div class="field-label">Date d'emprunt</div>
+        <div class="field readonly">10/07/2026</div>
+        <div class="field-label">Date de retour prévue</div>
+        <div class="field readonly">24/07/2026</div>
+        <div class="btn-row">
+          <div class="btn primary">Confirmer le retour</div>
+          <div class="btn">Annuler</div>
+        </div>
+        <div class="msg ok">✔ Livre retourné avec succès, il est de nouveau disponible</div>
+        <div class="msg err">✘ Aucun emprunt trouvé pour cette sélection</div>
+      </div>
+    </div>
+
+    <!-- Liste emprunts en cours -->
+    <div class="screen">
+      <div class="screen-header">Écran — Liste des emprunts <span class="role">Admin</span></div>
+      <div class="screen-body">
+        <div class="search-bar">Filtrer par statut : ☐ EN_COURS ☐ TERMINE</div>
+        <table class="wire">
+          <tr><th>Utilisateur</th><th>Livre</th><th>Retour prévu</th><th>Statut</th><th>Action</th></tr>
+          <tr><td>Rakoto J.</td><td>Le Petit Prince</td><td>24/07/2026</td><td>EN_COURS</td>
+            <td class="row-actions"><span>Retourner</span></td></tr>
+          <tr><td>Rasoa A.</td><td>1984</td><td>15/07/2026</td><td>TERMINE</td>
+            <td class="row-actions">—</td></tr>
+        </table>
+        <div class="note">Message si aucun emprunt : « Aucun emprunt en cours »</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
