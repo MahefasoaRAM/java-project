@@ -28,17 +28,37 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http, JwtFilter jwtFilter) throws Exception {
     return http
-        .csrf(AbstractHttpConfigurer::disable)
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/auth/*").permitAll()
-            .requestMatchers(HttpMethod.POST, "/api/livres/**").hasRole("ADMIN")
-            .requestMatchers(HttpMethod.PUT, "/api/livres/**").hasRole("ADMIN")
-            .requestMatchers(HttpMethod.DELETE, "/api/livres/**").hasRole("ADMIN")
-            .requestMatchers(HttpMethod.GET, "/api/emprunts").hasRole("ADMIN")
-            .requestMatchers("/api/emprunts/**").authenticated()
-            .anyRequest().authenticated())
-        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-        .build();
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(auth -> auth
+
+                    // Swagger
+                    .requestMatchers(
+                            "/swagger-ui.html",
+                            "/swagger-ui/**",
+                            "/v3/api-docs/**",
+                            "/v3/api-docs",
+                            "/swagger-resources/**",
+                            "/webjars/**"
+                    ).permitAll()
+
+                    // Auth
+                    .requestMatchers("/api/auth/**").permitAll()
+
+                    // Livres
+                    .requestMatchers(HttpMethod.POST, "/api/livres/**").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.PUT, "/api/livres/**").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.DELETE, "/api/livres/**").hasRole("ADMIN")
+
+                    // Emprunts
+                    .requestMatchers(HttpMethod.GET, "/api/emprunts").hasRole("ADMIN")
+                    .requestMatchers("/api/emprunts/**").authenticated()
+
+                    .anyRequest().authenticated()
+            )
+            .sessionManagement(session ->
+                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+            .build();
   }
 }
