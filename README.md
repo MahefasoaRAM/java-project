@@ -31,6 +31,7 @@ Le backend suit une architecture classique en couches :
 - JWT
 - MySQL
 - Lombok
+- Springdoc OpenAPI / Swagger UI
 
 ## Fonctionnalités
 
@@ -81,6 +82,33 @@ L’API utilise des endpoints publics pour l’authentification :
 
 Les autres routes sont protégées par JWT.  
 Les opérations de création, modification et suppression de livres sont réservées au rôle `ADMIN`.
+
+## Documentation Swagger
+
+La documentation interactive de l’API est disponible via Swagger/OpenAPI.
+
+### Dépendance utilisée
+
+- `org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5`
+
+### Accès à la documentation
+
+- interface Swagger UI : `http://localhost:8080/swagger-ui/index.html`
+- endpoint OpenAPI JSON : `http://localhost:8080/v3/api-docs`
+
+### Configuration
+
+- la configuration OpenAPI est définie dans `src/main/java/com/bibliotheque/apiservice/config/OpenApiConfig.java` ;
+- le schéma d’authentification `Bearer JWT` est déclaré pour permettre les appels authentifiés depuis Swagger ;
+- les routes Swagger et OpenAPI sont autorisées publiquement dans `src/main/java/com/bibliotheque/apiservice/config/SecurityConfig.java`.
+
+### Utilisation
+
+Depuis Swagger UI, vous pouvez :
+
+- consulter la liste des endpoints exposés ;
+- tester les requêtes directement depuis le navigateur ;
+- renseigner un token JWT via le bouton `Authorize` avant d’appeler les routes protégées.
 
 ## Endpoints principaux
 
@@ -183,6 +211,12 @@ Le secret JWT et la durée de validité du token sont également définis dans c
 
 ```bash
 ./gradlew bootRun
+```
+
+Une fois l’application démarrée, ouvrez Swagger UI sur :
+
+```text
+http://localhost:8080/swagger-ui/index.html
 ```
 
 Pour exécuter les tests :
