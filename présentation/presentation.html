@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Médiathèque Numérique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,680;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --bg:#f2ead9;
+  --surface:#fffdf8;
+  --surface-2:#eadfc4;
+  --ink:#201a13;
+  --ink-dim:#6b6250;
+  --brass:#96672b;
+  --brass-strong:#7a5321;
+  --line:rgba(32,26,19,0.16);
+  --ok:#3d6e52;
+  --shadow:0 18px 40px -20px rgba(32,20,8,0.35);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1524;
+    --surface:#141c30;
+    --surface-2:#1b2740;
+    --ink:#eef0f6;
+    --ink-dim:#93a0c0;
+    --brass:#d9ac68;
+    --brass-strong:#f0c789;
+    --line:rgba(238,240,246,0.14);
+    --ok:#82c0a1;
+    --shadow:0 24px 60px -20px rgba(0,0,0,0.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1524;
+  --surface:#141c30;
+  --surface-2:#1b2740;
+  --ink:#eef0f6;
+  --ink-dim:#93a0c0;
+  --brass:#d9ac68;
+  --brass-strong:#f0c789;
+  --line:rgba(238,240,246,0.14);
+  --ok:#82c0a1;
+  --shadow:0 24px 60px -20px rgba(0,0,0,0.55);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"Work Sans",-apple-system,sans-serif;
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--brass);color:var(--bg)}
+
+.eyebrow-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:.5em;
+  font-family:"IBM Plex Mono",monospace;
+  font-size:12.5px;
+  font-weight:600;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  color:var(--brass-strong);
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  padding:.4em .85em .4em .7em;
+  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,0 100%);
+}
+h1,h2,h3{font-family:"Fraunces",Georgia,serif;text-wrap:balance;margin:0}
+.mono{font-family:"IBM Plex Mono",monospace}
+.tab{font-variant-numeric:tabular-nums}
+
+/* ============ APP SHELL ============ */
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+
+.topbar{
+  flex:0 0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 18px;
+  border-bottom:1px solid var(--line);
+  background:var(--bg);
+  z-index:40;
+  transition:opacity .5s ease, transform .5s ease;
+}
+body[data-mode="spectator"] .topbar.idle{opacity:0;transform:translateY(-100%);pointer-events:none}
+
+.brand{display:flex;align-items:center;gap:10px;color:var(--ink-dim)}
+.brand svg{flex:0 0 auto;color:var(--brass)}
+.brand .word{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+.brand .word b{color:var(--ink);font-weight:600}
+
+.chrome-controls{display:flex;align-items:center;gap:14px}
+.mode-switch{
+  display:flex;align-items:center;gap:0;
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:3px;
+  background:var(--surface);
+  font-family:"IBM Plex Mono",monospace;
+  font-size:11.5px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.mode-switch button{
+  border:none;background:transparent;color:var(--ink-dim);
+  padding:6px 14px;border-radius:999px;cursor:pointer;font:inherit;
+  transition:background .25s,color .25s;
+}
+.mode-switch button.active{background:var(--brass);color:var(--bg);font-weight:600}
+.icon-btn{
+  width:32px;height:32px;border-radius:8px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink-dim);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:color .2s,border-color .2s;
+}
+.icon-btn:hover{color:var(--ink);border-color:var(--brass)}
+.icon-btn:focus-visible,.mode-switch button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.icon-btn.wide{
+  width:auto;gap:7px;padding:0 12px;
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;
+}
+.icon-btn.wide.is-paired{color:var(--ok);border-color:color-mix(in srgb, var(--ok) 45%, var(--line))}
+
+.toast{
+  position:fixed;left:50%;bottom:28px;transform:translateX(-50%);
+  background:var(--surface);border:1px solid var(--brass);border-radius:10px;
+  padding:12px 16px;box-shadow:var(--shadow);z-index:80;
+  display:flex;align-items:center;gap:14px;max-width:620px;
+  font-size:13px;color:var(--ink);line-height:1.5;
+}
+.toast strong{font-weight:600}
+.toast .toast-link{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--brass-strong);
+  background:var(--surface-2);border:1px solid var(--line);border-radius:6px;
+  padding:5px 10px;cursor:pointer;white-space:nowrap;
+}
+.toast .toast-close{border:none;background:transparent;color:var(--ink-dim);cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;flex:0 0 auto}
+
+/* ============ MAIN LAYOUT ============ */
+.main{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:1fr;transition:grid-template-columns .35s ease}
+body[data-mode="presenter"] .main{grid-template-columns:minmax(0,1fr) 400px}
+
+.stage-wrap{position:relative;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.stage{
+  width:1280px;height:720px;
+  flex:0 0 auto;
+  background:var(--surface);
+  box-shadow:var(--shadow);
+  position:relative;
+  transform-origin:center center;
+}
+body[data-mode="presenter"] .stage{box-shadow:none;border:1px solid var(--line)}
+
+/* click zones for nav (spectator) */
+.navzone{position:absolute;top:0;bottom:0;width:18%;z-index:5;cursor:pointer}
+.navzone.prev{left:0}
+.navzone.next{right:0}
+.navhint{
+  position:absolute;top:50%;transform:translateY(-50%);
+  width:40px;height:40px;border-radius:50%;
+  background:var(--surface);border:1px solid var(--line);color:var(--ink-dim);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .25s;
+}
+.navzone.prev .navhint{left:14px}
+.navzone.next .navhint{right:14px}
+.navzone:hover .navhint{opacity:.9}
+
+/* ============ SLIDES ============ */
+/* slides stay laid out (not display:none) even when inactive, so the Mermaid
+   diagrams inside them can be measured/rendered correctly at page load */
+.slide{
+  position:absolute;inset:0;
+  display:flex;
+  padding:46px 64px 42px;
+  flex-direction:column;
+  overflow:hidden;
+  opacity:0;
+  pointer-events:none;
+  z-index:0;
+}
+.slide.is-active{opacity:1;pointer-events:auto;z-index:2}
+
+.slide-head{flex:0 0 auto;display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.slide-head h2{font-size:47px;font-weight:600;line-height:1.05;color:var(--ink)}
+.slide-head h2 em{font-style:italic;color:var(--brass-strong)}
+.slide-sub{color:var(--ink-dim);font-size:18px;max-width:66ch;line-height:1.5}
+.slide-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:18px}
+
+.slide-foot{
+  position:absolute;left:64px;right:64px;bottom:20px;
+  display:flex;align-items:center;justify-content:space-between;
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-dim);
+}
+.slide-foot .bar{flex:1;height:2px;background:var(--line);margin:0 18px;position:relative;overflow:hidden}
+.slide-foot .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--brass);width:0%}
+
+.notes-flag{position:absolute;bottom:26px;right:84px;display:none}
+
+/* cover */
+.slide.cover{padding:0;justify-content:center;align-items:center;text-align:center;background:
+  radial-gradient(ellipse at 20% 15%, color-mix(in srgb, var(--brass) 10%, transparent), transparent 55%),
+  radial-gradient(ellipse at 85% 90%, color-mix(in srgb, var(--brass) 8%, transparent), transparent 50%),
+  var(--surface);
+}
+.cover-mark{color:var(--brass);margin-bottom:28px}
+.cover .eyebrow-chip{margin-bottom:26px}
+.cover h1{font-size:78px;font-weight:600;letter-spacing:-.01em;line-height:1}
+.cover h1 em{font-style:italic;font-weight:500;color:var(--brass-strong)}
+.cover .sub{margin-top:18px;font-size:19px;color:var(--ink-dim);max-width:52ch}
+.cover .meta{
+  margin-top:46px;display:flex;gap:28px;align-items:center;
+  font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-dim);
+  letter-spacing:.03em;
+}
+.cover .meta span{display:flex;align-items:center;gap:8px}
+.cover .meta i{width:5px;height:5px;border-radius:50%;background:var(--brass);display:inline-block}
+
+/* agenda */
+.agenda-list{flex:1;display:flex;flex-direction:column;justify-content:center;gap:0;max-width:900px}
+.agenda-item{
+  display:grid;grid-template-columns:60px 1fr auto;align-items:baseline;
+  gap:22px;padding:9px 0;border-bottom:1px solid var(--line);
+}
+.agenda-item:first-child{border-top:1px solid var(--line)}
+.agenda-item .num{font-family:"IBM Plex Mono",monospace;color:var(--brass);font-size:15px;font-weight:600}
+.agenda-item .lbl{font-family:"Fraunces",serif;font-size:22.5px;font-weight:500}
+.agenda-item .tag{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.06em}
+
+/* generic content helpers */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;flex:1;min-height:0}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{
+  background:var(--surface-2);border:1px solid var(--line);border-radius:4px;
+  padding:20px 22px;
+}
+.card h4{font-family:"Fraunces",serif;font-size:19px;font-weight:600;margin-bottom:9px;display:flex;align-items:center;gap:10px}
+.card p{margin:0;color:var(--ink-dim);font-size:15.5px;line-height:1.55}
+.card .n{font-family:"IBM Plex Mono",monospace;color:var(--brass);font-size:14px}
+
+.pill{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.05em;text-transform:uppercase;
+  padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--ink-dim);
+}
+.pill.admin{color:var(--brass-strong);border-color:color-mix(in srgb, var(--brass) 45%, var(--line))}
+.pill.user{color:var(--ok);border-color:color-mix(in srgb, var(--ok) 45%, var(--line))}
+
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+table.table-tight td{padding:6px 12px}
+th{font-family:"IBM Plex Mono",monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-dim);font-weight:600}
+td{color:var(--ink)}
+td.dim{color:var(--ink-dim)}
+tr:last-child td{border-bottom:none}
+code{font-family:"IBM Plex Mono",monospace;font-size:.92em;background:var(--surface-2);padding:.1em .4em;border-radius:3px}
+
+.scrollbox{overflow:auto;flex:1;min-height:0}
+.scrollbox::-webkit-scrollbar{width:8px;height:8px}
+.scrollbox::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.stat{border-top:2px solid var(--brass);padding-top:10px}
+.stat b{display:block;font-family:"Fraunces",serif;font-size:41px;font-weight:600;line-height:1}
+.stat span{font-family:"IBM Plex Mono",monospace;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-dim)}
+
+.diagram-figure{margin:0;display:flex;flex-direction:column;gap:12px;flex:1;min-height:0}
+.diagram-figure svg{width:100%;height:100%;max-height:100%;object-fit:contain}
+.diagram-figure figcaption{font-size:14px;color:var(--ink-dim);line-height:1.5;max-width:84ch}
+.diagram-figure figcaption b{color:var(--ink);font-weight:600}
+
+pre.mermaid{
+  background:transparent;margin:0;flex:1;min-height:0;
+  display:flex;align-items:center;justify-content:center;overflow:auto;
+}
+/* mermaid renders its own <svg> with inline sizing — force it to fill the slide */
+pre.mermaid svg{
+  width:100% !important;
+  max-width:none !important;
+  height:100% !important;
+  max-height:100% !important;
+}
+
+.bars{display:flex;flex-direction:column;gap:14px}
+.bar-row{display:grid;grid-template-columns:180px 1fr 46px;align-items:center;gap:12px}
+.bar-row .lbl{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-dim)}
+.bar-track{height:14px;background:var(--surface-2);border:1px solid var(--line);position:relative;overflow:hidden}
+.bar-fill{height:100%;background:var(--brass)}
+.bar-row .val{font-family:"IBM Plex Mono",monospace;font-size:13px;text-align:right;font-weight:600}
+
+.checklist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.checklist li{display:flex;gap:10px;align-items:flex-start;font-size:15.5px;color:var(--ink)}
+.checklist li svg{flex:0 0 auto;margin-top:3px;color:var(--ok)}
+
+.browser-chrome{border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface-2);flex:1;display:flex;flex-direction:column;min-height:0}
+.browser-chrome .bb{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface)}
+.browser-chrome .bb i{width:9px;height:9px;border-radius:50%;background:var(--line)}
+.browser-chrome .bb .url{margin-left:8px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-dim);background:var(--surface-2);padding:3px 10px;border-radius:4px;flex:1}
+.browser-chrome .bc{padding:16px 18px;overflow:auto;flex:1}
+
+.timeline-name{font-weight:600}
+
+/* closing */
+.slide.closing{align-items:center;justify-content:center;text-align:center}
+.slide.closing h2{font-size:56px}
+
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ============ PRESENTER PANEL ============ */
+.presenter-panel{
+  display:none;flex-direction:column;min-height:0;
+  border-left:1px solid var(--line);background:var(--surface);
+}
+body[data-mode="presenter"] .presenter-panel{display:flex}
+
+.pp-stats{
+  flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr;gap:1px;
+  background:var(--line);border-bottom:1px solid var(--line);
+}
+.pp-stats .cell{background:var(--surface);padding:12px 16px}
+.pp-stats .cell span{display:block;font-family:"IBM Plex Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-dim);margin-bottom:4px}
+.pp-stats .cell b{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:600}
+.pp-timer-controls{display:flex;gap:6px;margin-top:6px}
+.pp-timer-controls button{
+  border:1px solid var(--line);background:var(--surface-2);color:var(--ink-dim);
+  font-family:"IBM Plex Mono",monospace;font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;
+}
+.pp-timer-controls button:hover{color:var(--ink);border-color:var(--brass)}
+
+.pp-section{flex:0 0 auto;padding:14px 16px 8px;border-bottom:1px solid var(--line)}
+.pp-section .h{font-family:"IBM Plex Mono",monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--brass-strong);margin-bottom:8px}
+
+.pp-notes{flex:1 1 auto;min-height:0;padding:16px;overflow:auto;font-size:15px;line-height:1.65;color:var(--ink)}
+.pp-notes p{margin:0 0 12px}
+.pp-notes p:last-child{margin-bottom:0}
+.pp-notes:empty::before{content:"— pas de notes pour cette diapositive —";color:var(--ink-dim);font-style:italic}
+
+.pp-next{flex:0 0 auto;padding:14px 16px;border-top:1px solid var(--line)}
+.pp-next-frame{
+  border:1px solid var(--line);border-radius:4px;overflow:hidden;position:relative;
+  width:100%;aspect-ratio:1280/720;background:var(--bg);
+}
+.pp-next-frame .thumb-clip{position:absolute;top:0;left:0;width:1280px;height:720px;transform-origin:top left;pointer-events:none}
+.pp-next-title{margin-top:8px;font-size:13px;color:var(--ink-dim)}
+.pp-next-title b{color:var(--ink);font-weight:600}
+
+.kbd-hint{
+  position:fixed;left:50%;bottom:28px;transform:translateX(-50%);
+  background:var(--surface);border:1px solid var(--line);border-radius:999px;
+  padding:8px 18px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-dim);
+  display:flex;gap:16px;box-shadow:var(--shadow);z-index:60;
+  transition:opacity .6s ease;
+}
+.kbd-hint kbd{background:var(--surface-2);border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-family:inherit}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <div class="topbar" id="topbar">
+    <div class="brand">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 5 C 9 4 5.5 4 3 5 V18 C5.5 17 9 17 12 18 C15 17 18.5 17 21 18 V5 C18.5 4 15 4 12 5 Z" stroke="currentColor" stroke-width="1.4" fill="none"/>
+        <path d="M12 5 V18" stroke="currentColor" stroke-width="1.4"/>
+        <circle cx="12" cy="5" r="1.6" fill="currentColor"/>
+      </svg>
+      <span class="word">Médiathèque · <b>Numérique</b></span>
+    </div>
+    <div class="chrome-controls">
+      <button type="button" class="icon-btn wide" id="btn-open-presenter" title="Ouvrir la vue présentateur dans une nouvelle fenêtre">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M14 4h6v6M20 4l-8 8M9 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Vue présentateur</span>
+      </button>
+      <div class="mode-switch" role="group" aria-label="Mode d'affichage">
+        <button type="button" id="btn-spectator" class="active">Spectateur</button>
+        <button type="button" id="btn-presenter">Présentateur</button>
+      </div>
+      <button type="button" class="icon-btn" id="btn-fullscreen" title="Plein écran (F)" aria-label="Plein écran">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <div class="main">
+    <div class="stage-wrap" id="stageWrap">
+      <div class="stage" id="stage">
+
+        <!-- ============================================================ SLIDE 0 — COVER -->
+        <section class="slide cover is-active" data-title="Médiathèque Numérique" data-eyebrow="Ouverture">
+          <svg class="cover-mark" width="46" height="46" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 5 C 9 4 5.5 4 3 5 V18 C5.5 17 9 17 12 18 C15 17 18.5 17 21 18 V5 C18.5 4 15 4 12 5 Z" stroke="currentColor" stroke-width="1.1" fill="none"/>
+            <path d="M12 5 V18" stroke="currentColor" stroke-width="1.1"/>
+            <circle cx="12" cy="5" r="1.4" fill="currentColor"/>
+          </svg>
+          <span class="eyebrow-chip">UE Java Avancé — Master 1</span>
+          <h1>Médiathèque<br><em>Numérique</em></h1>
+          <p class="sub">Conception et développement d'une API REST Spring&nbsp;Boot pour la gestion d'un catalogue de livres, des utilisateurs et des emprunts.</p>
+          <div class="meta">
+            <span><i></i>Encadrant : Dr RAPATSALAHY</span>
+            <span><i></i>github.com/MahefasoaRAM/java-project</span>
+            <span><i></i>5 contributeurs</span>
+            <span><i></i>Juillet – Août 2026</span>
+          </div>
+          <div class="notes" hidden>
+            <p>Bonjour à tous. Nous allons présenter notre mini-projet Java : une API REST de gestion d'une médiathèque numérique, développée en Spring Boot dans le cadre de l'UE Java Avancé.</p>
+            <p>Le fil de la présentation suit exactement le cycle que nous avons suivi : analyse du besoin, conception, développement, tests, documentation, jusqu'à la mise en production.</p>
+          </div>
+        </section>
+
+        <!-- ============================================================ SLIDE 1 — SOMMAIRE -->
+        <section class="slide" data-title="Sommaire" data-eyebrow="Plan">
+          <div class="slide-head">
+            <span class="eyebrow-chip">Plan de la présentation</span>
+            <h2>Le fil du <em>cycle de projet</em></h2>
+            <p class="slide-sub">Neuf étapes, du cahier des charges à la mise en production — dans l'ordre où nous les avons réellement traversées.</p>
+          </div>
+          <div class="agenda-list">
+            <div class="agenda-item"><span class="num">00</span><span class="lbl">Cadrage — contexte, objectifs, acteurs</span><span class="tag">CDC</span></div>
+            <div class="agenda-item"><span class="num">01</span><span class="lbl">Méthodologie & organisation d'équipe</span><span class="tag">Git · Kanban</span></div>
+            <div class="agenda-item"><span class="num">02</span><span class="lbl">Analyse des besoins</span><span class="tag">Terminé</span></div>
+            <div class="agenda-item"><span class="num">03</span><span class="lbl">Conception — diagrammes UML</span><span class="tag">Terminé</span></div>
+            <div class="agenda-item"><span class="num">04</span><span class="lbl">Conception de l'IHM — maquettes</span><span class="tag">Terminé</span></div>
+            <div class="agenda-item"><span class="num">05</span><span class="lbl">Architecture technique & sécurité</span><span class="tag">Terminé</span></div>
+            <div class="agenda-item"><span class="num">06</span><span class="lbl">Développement de l'API</span><span class="tag">Terminé</span></div>
+            <div class="agenda-item"><span class="num">07</span><span class="lbl">Tests unitaires</span><span class="tag">Terminé</span></div>
+            <div class="agenda-item"><span class="num">08</span><span class="lbl">Documentation & mise en production</span><span class="tag">Terminé</span></div>
+          </div>
+          <div class="notes" hidden>
+            <p>Voici le plan. Nous reprenons volontairement la même trame que notre tableau Kanban Trello : chaque colonne « Terminé » correspond à une étape de cette présentation.</p>
+            <p>On commence par le cadrage du besoin, puis on descend progressivement jusqu'à la mise en production.</p>
+          </div>
+        </section>
+
+        <!-- ============================================================ SLIDE 2 — CONTEXTE -->
+        <section class="slide" data-title="Contexte" data-eyebrow="00 — Cadrage">
+          <div class="slide-head">
+            <span class="eyebrow-chip">00 — Cadrage</span>
+            <h2>Une gestion <em>manuelle</em>, quatre problèmes récurrents</h2>
+            <p class="slide-sub">La médiathèque veut moderniser le suivi de son catalogue et de ses emprunts. Le cahier des charges identifie quatre points de friction.</p>
+          </div>
+          <div class="grid4" style="flex:1">
+            <div class="card"><h4><span class="n">01</span> Suivi des emprunts</h4><p>Impossible de savoir rapidement quels livres sont sortis, et par qui.</p></div>
+            <div class="card"><h4><span class="n">02</span> Livres perdus</h4><p>Aucune alerte sur les retours en retard ou les ouvrages non rendus.</p></div>
+            <div class="card"><h4><span class="n">03</span> Disponibilité</h4><p>Aucune visibilité en temps réel sur les ouvrages disponibles au catalogue.</p></div>
+            <div class="card"><h4><span class="n">04</span> Traçabilité</h4><p>Les emprunteurs ne sont pas reliés de façon fiable à leurs emprunts.</p></div>
+          </div>
+          <div class="card" style="margin-top:4px">
+            <p>➜ Réponse retenue : une <b style="color:var(--ink)">API REST Spring Boot</b> exposant le catalogue et le système d'emprunt, consommable ensuite par une application web ou mobile (hors périmètre de ce mini-projet).</p>
+          </div>
+          <div class="notes" hidden>
+            <p>On part toujours du besoin métier, pas de la techno. Ces quatre problèmes viennent tels quels du cahier des charges fourni par le professeur.</p>
+            <p>Insister sur le fait que le projet est backend-only : pas de front prévu, c'est une API consommée par un client externe.</p>
+          </div>
+        </section>
+
+        <!-- ============================================================ SLIDE 3 — OBJECTIFS -->
+        <section class="slide" data-title="Objectifs & contraintes" data-eyebrow="00 — Cadrage">
+          <div class="slide-head">
+            <span class="eyebrow-chip">00 — Cadrage</span>
+            <h2>Objectifs <em>fonctionnels</em> et contraintes techniques</h2>
+          </div>
+          <div class="grid2">
+            <div class="card">
+              <h4>Objectifs</h4>
+              <ul class="checklist">
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Gérer le catalogue de livres</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Gérer les comptes utilisateurs</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Gérer les emprunts et retours</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Garantir la cohérence des données métier</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>Contraintes du CDC</h4>
+              <ul class="checklist">
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Java + Spring Boot, architecture en couches</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>API REST, réponses JSON, erreurs cohérentes</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Base de données relationnelle</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Gestion des exceptions métier, code maintenable</li>
+              </ul>
+            </div>
+          </div>
+          <div class="card">
+            <p><b style="color:var(--ink)">Livrables attendus&nbsp;:</b> code source complet · documentation technique · démonstration fonctionnelle · dépôt Git structuré — un projet d'ingénierie logicielle complet, pas seulement du code.</p>
+          </div>
+          <div class="notes" hidden>
+            <p>Le CDC est explicite : ce n'est pas juste "coder des CRUD", c'est analyse + conception + développement + qualité + documentation. C'est exactement la structure de notre présentation.</p>
+          </div>
+        </section>
+
+        <!-- ============================================================ SLIDE 4 — ACTEURS -->
+        <section class="slide" data-title="Acteurs du système" data-eyebrow="00 — Cadrage">
+          <div class="slide-head">
+            <span class="eyebrow-chip">00 — Cadrage</span>
+            <h2>Deux acteurs, deux <em>niveaux de droits</em></h2>
+          </div>
+          <div class="grid2">
+            <div class="card">
+              <h4><span class="pill user">Utilisateur</span></h4>
+              <p style="margin-top:10px">Personne enregistrée dans le système, pouvant consulter le catalogue et gérer ses propres emprunts.</p>
+              <ul class="checklist" style="margin-top:14px">
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Consulter le catalogue de livres</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Emprunter un livre disponible</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Retourner un livre emprunté</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Emprunter plusieurs livres à la fois</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4><span class="pill admin">Administrateur</span></h4>
+              <p style="margin-top:10px">Responsable de la gestion du catalogue et de la supervision des comptes et des emprunts.</p>
+              <ul class="checklist" style="margin-top:14px">
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Ajouter / modifier / supprimer un livre</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Gérer les comptes utilisateurs</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Consulter tous les emprunts en cours</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Seul rôle autorisé à écrire sur le catalogue</li>
+              </ul>
+            </div>
+          </div>
+          <div class="notes" hidden>
+            <p>Deux rôles seulement — c'est volontairement simple, mais ça structure toute la sécurité JWT qu'on verra plus tard : seul ADMIN peut écrire sur les livres.</p>
+          </div>
+        </section>
+
+        <!-- ============================================================ SLIDE 5 — ETAPE 01 METHODOLOGIE -->
+        <section class="slide" data-title="Méthodologie & organisation" data-eyebrow="Étape 01 — Organisation">
+          <div class="slide-head">
+            <span class="eyebrow-chip">Étape 01 — Organisation</span>
+            <h2>Un <em>Kanban</em> et un flux Git par fonctionnalité</h2>
+            <p class="slide-sub">Suivi des tâches sur un tableau Trello (À faire / En cours / Terminé) ; chaque fonctionnalité développée dans sa propre branche, revue par Pull Request avant fusion.</p>
+          </div>
+          <figure class="diagram-figure">
+            <svg viewBox="0 0 1120 330" role="img" aria-label="Modèle de branches Git : les branches feature partent de develop et y fusionnent après revue, develop fusionne périodiquement dans main">
+              <defs>
+                <marker id="arrM" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0,0 L8,4 L0,8 Z" fill="currentColor"/>
+                </marker>
+                <marker id="arrB" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0,0 L8,4 L0,8 Z" fill="var(--brass)"/>
+                </marker>
+              </defs>
+              <!-- lane labels -->
+              <text x="20" y="55" class="mono" font-size="11" letter-spacing="1" fill="currentColor" opacity=".55">FEATURE/*</text>
+              <text x="20" y="185" class="mono" font-size="11" letter-spacing="1" fill="currentColor" opacity=".55">DEVELOP</text>
+              <text x="20" y="285" class="mono" font-size="11" letter-spacing="1" fill="var(--brass)">MAIN</text>
+              <!-- lanes -->
+              <line x1="88" y1="180" x2="1050" y2="180" stroke="currentColor" stroke-opacity=".28" stroke-width="2"/>
+              <line x1="88" y1="280" x2="1050" y2="280" stroke="var(--brass)" stroke-opacity=".55" stroke-width="2.5"/>
+
+              <!-- feature branches (diverge from develop, merge back) -->
+              <g class="mono" font-size="11" fill="currentColor">
+                <!-- exception -->
+                <path d="M140,180 L140,70 L200,70 L200,180" fill="none" stroke="currentColor" stroke-opacity=".65" stroke-width="1.6" marker-end="url(#arrM)"/>
+                <circle cx="140" cy="180" r="3.5" fill="currentColor"/>
+                <text x="170" y="55" text-anchor="middle">exception</text>
+                <!-- user -->
+                <path d="M270,180 L270,70 L330,70 L330,180" fill="none" stroke="currentColor" stroke-opacity=".65" stroke-width="1.6" marker-end="url(#arrM)"/>
+                <circle cx="270" cy="180" r="3.5" fill="currentColor"/>
+                <text x="300" y="55" text-anchor="middle">user</text>
+                <!-- authentification -->
+                <path d="M400,180 L400,70 L470,70 L470,180" fill="none" stroke="currentColor" stroke-opacity=".65" stroke-width="1.6" marker-end="url(#arrM)"/>
+                <circle cx="400" cy="180" r="3.5" fill="currentColor"/>
+                <text x="435" y="55" text-anchor="middle">authentification</text>
+                <!-- livre -->
+                <path d="M545,180 L545,70 L600,70 L600,180" fill="none" stroke="currentColor" stroke-opacity=".65" stroke-width="1.6" marker-end="url(#arrM)"/>
+                <circle cx="545" cy="180" r="3.5" fill="currentColor"/>
+                <text x="572" y="55" text-anchor="middle">livre</text>
+                <!-- emprunt -->
+                <path d="M665,180 L665,70 L725,70 L725,180" fill="none" stroke="currentColor" stroke-opacity=".65" stroke-width="1.6" marker-end="url(#arrM)"/>
+                <circle cx="665" cy="180" r="3.5" fill="currentColor"/>
+                <text x="695" y="55" text-anchor="middle">emprunt</text>
+                <!-- tests -->
+                <path d="M790,180 L790,70 L845,70 L845,180" fill="none" stroke="currentColor" stroke-opacity=".65" stroke-width="1.6" marker-end="url(#arrM)"/>
+                <circle cx="790" cy="180" r="3.5" fill="currentColor"/>
+                <text x="817" y="55" text-anchor="middle">tests</text>
+                <!-- ihm -->
+                <path d="M910,180 L910,70 L965,70 L965,180" fill="none" stroke="currentColor" stroke-opacity=".65" stroke-width="1.6" marker-end="url(#arrM)"/>
+                <circle cx="910" cy="180" r="3.5" fill="currentColor"/>
+                <text x="937" y="55" text-anchor="middle">ihm</text>
+              </g>
+
+              <!-- develop -> main release merges -->
+              <path d="M260,180 L260,280" fill="none" stroke="var(--brass)" stroke-width="2" marker-end="url(#arrB)"/>
+              <path d="M560,180 L560,280" fill="none" stroke="var(--brass)" stroke-width="2" marker-end="url(#arrB)"/>
+              <path d="M900,180 L900,280" fill="none" stroke="var(--brass)" stroke-width="2" marker-end="url(#arrB)"/>
+              <text x="270" y="235" class="mono" font-size="10.5" fill="var(--brass)">PR → main</text>
+
+              <text x="1050" y="185" text-anchor="end" class="mono" font-size="10.5" fill="currentColor" opacity=".55">+ 12 autres branches (docs, readme…)</text>
+            </svg>
+            <figcaption><b>Modèle de branches&nbsp;:</b> chaque fonctionnalité vit dans une branche <code>feature/*</code>, revue via <b>Pull Request</b>, fusionnée dans <code>develop</code>, puis livrée vers <code>main</code> — <b>40 commits</b> et <b>19 Pull Requests</b> fusionnées au total.</figcaption>
+          </figure>
+          <div class="notes" hidden>
+            <p>On explique ici comment on a travaillé à cinq, pas seulement ce qu'on a livré. Le tableau Trello donnait la vue macro (À faire / En cours / Terminé), le workflow Git donnait la vue fine par fonctionnalité.</p>
+            <p>Chaque branche feature correspond à une carte Trello. Une PR = une revue de code avant fusion dans develop.</p>
+          </div>
+        </section>
+
+        <!-- ============================================================ SLIDE 6 — ETAPE 02 ANALYSE -->
+        <section class="slide" data-title="Analyse des besoins" data-eyebrow="Étape 02 — Analyse">
+          <div class="slide-head">
+            <span class="eyebrow-chip">Étape 02 — Analyse</span>
+            <h2>Trois entités métier, <em>six règles de gestion</em></h2>
+          </div>
+          <div class="grid2" style="flex:1">
+            <div class="card">
+              <h4>Fonctionnalités par entité</h4>
+              <table>
+                <tr><th>Entité</th><th>Attributs</th><th>Actions</th></tr>
+                <tr><td>Livre</td><td class="dim">titre, auteur, catégorie, disponibilité</td><td class="dim">CRUD + recherche</td></tr>
+                <tr><td>Utilisateur</td><td class="dim">nom, email, rôle</td><td class="dim">CRUD + filtrage</td></tr>
+                <tr><td>Emprunt</td><td class="dim">utilisateur, livre, dates, statut</td><td class="dim">créer, retourner, lister</td></tr>
+              </table>
+            </div>
+            <div class="card">
+              <h4>Règles de gestion (RG)</h4>
+              <ul class="checklist">
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b class="mono" style="color:var(--brass)">RG-01</b> — un livre indisponible ne peut être emprunté</span></li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b class="mono" style="color:var(--brass)">RG-02</b> — un livre, un seul emprunteur à la fois</span></li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b class="mono" style="color:var(--brass)">RG-03</b> — un utilisateur peut cumuler des emprunts</span></li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b class="mono" style="color:var(--brass)">RG-04</b> — un retour libère le livre automatiquement</span></li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b class="mono" style="color:var(--brass)">RG-05</b> — pas d'emprunt sur une entité inexistante</span></li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b class="mono" style="color:var(--brass)">RG-06</b> — un livre avec emprunt en cours reste protégé</span></li>
+              </ul>
+            </div>
+          </div>
+          <div class="notes" hidden>
+            <p>Ces règles ne sont pas des détails : ce sont elles qui deviennent, plus tard, nos exceptions métier et nos tests unitaires. Bien les montrer ici crée le fil rouge jusqu'à la diapositive tests.</p>
+          </div>
+        </section>
+
+        <!-- ============================================================ SLIDE 7 — ETAPE 03a UML CAS D'UTILISATION -->
+        <section class="slide" data-title="UML — Cas d'utilisation" data-eyebrow="Étape 03 — Conception UML">
+          <div class="slide-head">
+            <span class="eyebrow-chip">Étape 03 — Conception UML</span>
+            <h2>Diagramme de <em>cas d'utilisation</em></h2>
+          </div>
+          <pre class="mermaid">
+flowchart LR
+    Utilisateur(["👤 Utilisateur"])
+    Admin(["👤 Administrateur"])
+
+    subgraph Système_Médiathèque["Système Médiathèque"]
+        direction TB
+        UC1["Consulter le catalogue"]
+        UC2["Emprunter un livre"]
+        UC3["Retourner un livre"]
+        UC4["Ajouter un livre"]
+        UC5["Modifier un livre"]
+        UC6["Supprimer un livre"]
+        UC7["Consulter les emprunts"]
+        UC8["Gérer les utilisateurs"]
+    end
+
+    Utilisateur --> UC1
+    Utilisateur --> UC2
+    Utilisateur --> UC3
+
+    Admin --> UC1
+    Admin --> UC4
+    Admin --> UC5
+    Admin --> UC6
+    Admin --> UC7
+    Admin --> UC8
+          </pre>
+          <div class="notes" hidden>
+            <p>On retrouve exactement les deux acteurs vus au cadrage. L'utilisateur agit sur ses propres emprunts, l'administrateur a la main sur tout le catalogue.</p>
+          </div>
+        </section>
+
+        <!-- ============================================================ SLIDE 8 — ETAPE 03b UML CLASSES -->
+        <section class="slide" data-title="UML — Diagramme de classes" data-eyebrow="Étape 03 — Conception UML">
+          <div class="slide-head">
+            <span class="eyebrow-chip">Étape 03 — Conception UML</span>
+            <h2>Diagramme de <em>classes</em></h2>
+          </div>
+          <pre class="mermaid">
+classDiagram
+    class Livre {
+        +Long id
+        +String titre
+        +String auteur
+        +String categorie
+        +boolean disponible
+    }
+    class Utilisateur {
+        +Long id
+        +String nom
+        +String email
+        +Role role
+    }
+    class Emprunt {
+        +Long id
+        +LocalDate dateEmprunt
+        +LocalDate dateRetourPrevue
+        +StatutEmprunt statut
+    }
+    class StatutEmprunt {
+        &lt;&lt;enumeration&gt;&gt;
+        EN_COURS
+        TERMINE
+    }
+    class Role {
+        &lt;&lt;enumeration&gt;&gt;
+        UTILISATEUR
+        ADMINISTRATEUR
+    }
+    class LivreService {
+        &lt;&lt;interface&gt;&gt;
+        +ajouterLivre(LivreDTO) LivreDTO
+        +supprimerLivre(Long) void
+        +getLivres() List~LivreDTO~
+    }
+    class EmpruntService {
+        &lt;&lt;interface&gt;&gt;
+        +emprunterLivre(EmpruntDTO) EmpruntDTO
+        +retournerLivre(Long) EmpruntDTO
+    }
+
+    Emprunt "many" --> "1" Utilisateur : emprunteur
+    Emprunt "many" --> "1" Livre : livre
+    Emprunt --> StatutEmprunt
+    Utilisateur --> Role
+    LivreService ..> Livre : gère
+    EmpruntService ..> Emprunt : gère
+          </pre>
+          <div class="notes" hidden>
+            <p>Emprunt est la table d'association enrichie entre Utilisateur et Livre — c'est elle qui porte les dates et le statut. On garde ici une version condensée du diagramme complet (disponible dans analyse/uml-classes.mmd) pour rester lisible à l'écran.</p>
+          </div>
+        </section>
+
+        <!-- ============================================================ SLIDE 9 — ETAPE 03c UML SEQUENCE -->
+        <section class="slide" data-title="UML — Séquence : emprunter un livre" data-eyebrow="Étape 03 — Conception UML">
+          <div class="slide-head">
+            <span class="eyebrow-chip">Étape 03 — Conception UML</span>
+            <h2>Séquence — <em>emprunter un livre</em></h2>
+            <p class="slide-sub">Le cas nominal <b style="color:var(--ink)">et</b> le cas d'erreur (RG-01) sont modélisés dès la conception.</p>
+          </div>
+          <pre class="mermaid">
+sequenceDiagram
+    actor Client
+    participant EmpruntController
+    participant EmpruntService
+    participant LivreRepository
+    participant EmpruntRepository
+
+    Client->>EmpruntController: POST /api/emprunts\n{ livreId, utilisateurId, dateRetourPrevue }
+    EmpruntController->>EmpruntService: emprunterLivre(dto)
+    EmpruntService->>LivreRepository: findById(livreId)
+    LivreRepository-->>EmpruntService: Livre
+
+    alt Livre indisponible
+        EmpruntService-->>EmpruntController: LivreIndisponibleException
+        EmpruntController-->>Client: 409 Conflict
+    else Livre disponible
+        EmpruntService->>LivreRepository: save(livre.setDisponible(false))
+        EmpruntService->>EmpruntRepository: save(newEmprunt)
+        EmpruntRepository-->>EmpruntService: EmpruntDTO
+        EmpruntService-->>EmpruntController: EmpruntDTO
+        EmpruntController-->>Client: 201 Created
+    end
+          </pre>
+          <div class="notes" hidden>
+            <p>C'est ce diagramme, écrit avant la première ligne de code métier, qui a directement inspiré nos exceptions personnalisées et le test emprunterLivre_devraitEchouer_quandLivreIndisponible qu'on montrera plus loin.</p>
+          </div>
+        </section>
+
+        <!-- ============================================================ SLIDE 10 — ETAPE 04 IHM -->
+        <section class="slide" data-title="Conception IHM — maquettes" data-eyebrow="Étape 04 — Conception IHM">
+          <div class="slide-head">
+            <span class="eyebrow-chip">Étape 04 — Conception IHM</span>
+            <h2>11 écrans, <em>pensés par rôle</em></h2>
+            <p class="slide-sub">Avant de coder l'API, on a maquetté le futur client web/mobile — pour valider les parcours utilisateur et administrateur sur les mêmes règles de gestion.</p>
+          </div>
+          <div class="grid2" style="flex:1">
+            <div class="card">
+              <h4><span class="pill admin">Admin</span> Gestion du catalogue & des comptes</h4>
+              <ul class="checklist">
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Liste des livres</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Détail / Ajouter / Modifier un livre</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Liste des utilisateurs</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Ajouter / Modifier un utilisateur</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Liste des emprunts</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Boîte de dialogue — confirmation de suppression</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4><span class="pill user">Utilisateur / Admin</span> Emprunts</h4>
+              <ul class="checklist">
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Emprunter un livre</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Retourner un livre</li>
+              </ul>
+              <p style="margin-top:16px">Livrable&nbsp;: <code>Conception_IHM_Mediatheque.pdf</code> + prototype HTML interactif — validés avant le début du développement de l'API.</p>
+            </div>
+          </div>
+          <div class="notes" hidden>
+            <p>On montre que la maquette n'était pas un exercice isolé : les 11 écrans couvrent exactement les mêmes actions que le diagramme de cas d'utilisation vu juste avant.</p>
+          </div>
+        </section>
+
+        <!-- ============================================================ SLIDE 11 — ETAPE 05a ARCHITECTURE -->
+        <section class="slide" data-title="Architecture technique" data-eyebrow="Étape 05 — Architecture">
+          <div class="slide-head">
+            <span class="eyebrow-chip">Étape 05 — Architecture</span>
+            <h2>Une architecture <em>en couches</em>, strictement séparées</h2>
+          </div>
+          <figure class="diagram-figure">
+            <svg viewBox="0 0 900 500" role="img" aria-label="Architecture en couches : client vers JwtFilter, Controller, Service, Repository puis MySQL, avec la gestion des exceptions transverse sur Controller à Repository">
+              <defs>
+                <marker id="arrA" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0,0 L8,4 L0,8 Z" fill="currentColor"/>
+                </marker>
+              </defs>
+              <!-- boxes -->
+              <g font-family="IBM Plex Mono, monospace">
+                <rect x="270" y="14" width="360" height="46" rx="3" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+                <text x="450" y="42" text-anchor="middle" font-size="14" fill="currentColor">Client (Swagger UI / app externe)</text>
+
+                <rect x="270" y="100" width="360" height="46" rx="3" fill="none" stroke="var(--brass)" stroke-width="2"/>
+                <text x="450" y="128" text-anchor="middle" font-size="14" fill="var(--brass-strong)" font-weight="600">JwtFilter — frontière de sécurité</text>
+
+                <rect x="270" y="186" width="360" height="46" rx="3" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+                <text x="450" y="208" text-anchor="middle" font-size="14" fill="currentColor">Controller</text>
+                <text x="450" y="223" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".55">Auth · Livre · User · Emprunt</text>
+
+                <rect x="270" y="272" width="360" height="46" rx="3" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+                <text x="450" y="294" text-anchor="middle" font-size="14" fill="currentColor">Service</text>
+                <text x="450" y="309" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".55">règles de gestion RG-01 → RG-06</text>
+
+                <rect x="270" y="358" width="360" height="46" rx="3" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+                <text x="450" y="386" text-anchor="middle" font-size="14" fill="currentColor">Repository (Spring Data JPA)</text>
+
+                <rect x="270" y="444" width="360" height="46" rx="3" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+                <text x="450" y="472" text-anchor="middle" font-size="14" fill="currentColor">MySQL</text>
+              </g>
+
+              <!-- arrows -->
+              <g stroke="currentColor" stroke-width="1.6" fill="none">
+                <line x1="450" y1="60" x2="450" y2="98" marker-end="url(#arrA)"/>
+                <line x1="450" y1="146" x2="450" y2="184" marker-end="url(#arrA)"/>
+                <line x1="450" y1="232" x2="450" y2="270" marker-end="url(#arrA)"/>
+                <line x1="450" y1="318" x2="450" y2="356" marker-end="url(#arrA)"/>
+                <line x1="450" y1="404" x2="450" y2="442" marker-end="url(#arrA)"/>
+              </g>
+              <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor" opacity=".7">
+                <text x="470" y="83">HTTP</text>
+                <text x="470" y="169">JWT validé</text>
+                <text x="470" y="255">DTO / Request</text>
+                <text x="470" y="341">entité JPA</text>
+                <text x="470" y="427">SQL</text>
+              </g>
+
+              <!-- exception bracket -->
+              <path d="M700,186 L720,186 L720,404 L700,404" fill="none" stroke="currentColor" stroke-opacity=".4" stroke-width="1.3" stroke-dasharray="3 4"/>
+              <text x="760" y="298" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity=".6" transform="rotate(90 760 298)">GlobalExceptionHandler</text>
+            </svg>
+            <figcaption><b>Controller → Service → Repository</b>, avec <code>JwtFilter</code> comme frontière de sécurité placée avant le Controller, et un <code>GlobalExceptionHandler</code> transverse qui standardise toutes les erreurs métier (8 exceptions personnalisées).</figcaption>
+          </figure>
+          <div class="notes" hidden>
+            <p>Le point à souligner : JwtFilter s'exécute AVANT le Controller, dans la chaîne de filtres servlet. C'est la frontière de sécurité — d'où le contour doré sur ce schéma.</p>
+          </div>
+        </section>
+
+        <!-- ============================================================ SLIDE 12 — ETAPE 05b SECURITE JWT -->
+        <section class="slide" data-title="Sécurité — Authentification JWT" data-eyebrow="Étape 05 — Architecture">
+          <div class="slide-head">
+            <span class="eyebrow-chip">Étape 05 — Architecture</span>
+            <h2>Authentification <em>JWT</em>, sans état</h2>
+          </div>
+          <figure class="diagram-figure">
+            <svg viewBox="0 0 1080 380" role="img" aria-label="Flux JWT : le client se connecte et reçoit un token, puis présente ce token pour accéder aux routes protégées, avec vérification du rôle ADMIN pour les écritures">
+              <defs>
+                <marker id="arrC" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8 Z" fill="currentColor"/></marker>
+                <marker id="arrD" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8 Z" fill="var(--brass)"/></marker>
+              </defs>
+              <text x="30" y="28" class="mono" font-size="11" letter-spacing="1" fill="currentColor" opacity=".55">1 — CONNEXION</text>
+              <g font-family="IBM Plex Mono, monospace" font-size="12.5">
+                <rect x="30" y="46" width="150" height="50" rx="3" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+                <text x="105" y="76" text-anchor="middle" fill="currentColor">Client</text>
+                <rect x="270" y="46" width="190" height="50" rx="3" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+                <text x="365" y="76" text-anchor="middle" fill="currentColor">AuthController</text>
+                <rect x="550" y="46" width="190" height="50" rx="3" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+                <text x="645" y="76" text-anchor="middle" fill="currentColor">JwtService</text>
+                <rect x="830" y="46" width="220" height="50" rx="3" fill="none" stroke="var(--brass)" stroke-width="2"/>
+                <text x="940" y="76" text-anchor="middle" fill="var(--brass-strong)" font-weight="600">token JWT</text>
+              </g>
+              <line x1="180" y1="71" x2="268" y2="71" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrC)"/>
+              <text x="224" y="60" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="currentColor" opacity=".7">POST /auth/login</text>
+              <line x1="460" y1="71" x2="548" y2="71" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrC)"/>
+              <line x1="740" y1="71" x2="828" y2="71" stroke="var(--brass)" stroke-width="1.8" marker-end="url(#arrD)"/>
+              <path d="M940,96 C940,150 105,150 105,98" fill="none" stroke="var(--brass)" stroke-width="1.6" stroke-dasharray="4 4" marker-end="url(#arrD)"/>
+              <text x="520" y="140" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--brass-strong)">200 OK { token }</text>
+
+              <text x="30" y="200" class="mono" font-size="11" letter-spacing="1" fill="currentColor" opacity=".55">2 — REQUÊTE PROTÉGÉE</text>
+              <g font-family="IBM Plex Mono, monospace" font-size="12.5">
+                <rect x="30" y="218" width="150" height="50" rx="3" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+                <text x="105" y="248" text-anchor="middle" fill="currentColor">Client</text>
+                <rect x="270" y="218" width="190" height="50" rx="3" fill="none" stroke="var(--brass)" stroke-width="2"/>
+                <text x="365" y="243" text-anchor="middle" fill="var(--brass-strong)" font-weight="600">JwtFilter</text>
+                <text x="365" y="258" text-anchor="middle" font-size="9.5" fill="currentColor" opacity=".6">valide signature + expiration</text>
+                <rect x="550" y="218" width="190" height="50" rx="3" fill="none" stroke="currentColor" stroke-opacity=".55"/>
+                <text x="645" y="248" text-anchor="middle" fill="currentColor">Controller</text>
+                <rect x="830" y="164" width="220" height="46" rx="3" fill="none" stroke="var(--ok)" stroke-opacity=".8" stroke-width="1.6"/>
+                <text x="940" y="192" text-anchor="middle" fill="currentColor" font-size="11.5">200 / 201</text>
+                <rect x="830" y="252" width="220" height="46" rx="3" fill="none" stroke="currentColor" stroke-opacity=".4" stroke-dasharray="3 4"/>
+                <text x="940" y="280" text-anchor="middle" fill="currentColor" opacity=".7" font-size="11.5">403 Forbidden</text>
+              </g>
+              <line x1="180" y1="243" x2="268" y2="243" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrC)"/>
+              <text x="224" y="232" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="currentColor" opacity=".7">Authorization: Bearer &lt;token&gt;</text>
+              <line x1="460" y1="243" x2="548" y2="243" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrC)"/>
+              <line x1="740" y1="230" x2="828" y2="192" stroke="var(--ok)" stroke-width="1.6" marker-end="url(#arrC)"/>
+              <line x1="740" y1="256" x2="828" y2="275" stroke="currentColor" stroke-opacity=".5" stroke-width="1.6" stroke-dasharray="3 4" marker-end="url(#arrC)"/>
+              <text x="785" y="270" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="currentColor" opacity=".7">rôle ≠ ADMIN</text>
+            </svg>
+            <figcaption>Session <b>stateless</b> : aucune donnée de connexion côté serveur. Le token porte l'identité et le rôle ; les écritures sur le catalogue restent réservées au rôle <code>ADMIN</code>.</figcaption>
+          </figure>
+          <div class="notes" hidden>
+            <p>Deux endpoints publics seulement : register et login. Tout le reste passe par JwtFilter. Le choix stateless facilite la scalabilité horizontale — pas de session à partager entre instances.</p>
+          </div>
+        </section>
+
+        <!-- ============================================================ SLIDE 13 — ETAPE 06 DEVELOPPEMENT -->
+        <section class="slide" data-title="Développement de l'API" data-eyebrow="Étape 06 — Développement">
+          <div class="slide-head">
+            <span class="eyebrow-chip">Étape 06 — Développement</span>
+            <h2>De l'analyse au <em>code</em></h2>
+          </div>
+          <div class="stat-row">
+            <div class="stat"><b class="tab">21</b><span>Endpoints REST</span></div>
+            <div class="stat"><b class="tab">4</b><span>Contrôleurs</span></div>
+            <div class="stat"><b class="tab">8</b><span>Exceptions métier</span></div>
+            <div class="stat"><b class="tab">Java 17</b><span>Spring Boot 3.4.2</span></div>
+          </div>
+          <div class="grid2" style="flex:1;margin-top:6px">
+            <div class="card">
+              <h4>Stack technique</h4>
+              <table>
+                <tr><td>Spring Web / Data JPA</td><td class="dim">API REST, persistance</td></tr>
+                <tr><td>Spring Security + JWT</td><td class="dim">authentification stateless</td></tr>
+                <tr><td>MySQL</td><td class="dim">base relationnelle</td></tr>
+                <tr><td>Lombok</td><td class="dim">réduction du code répétitif</td></tr>
+                <tr><td>Springdoc OpenAPI</td><td class="dim">documentation Swagger</td></tr>
+              </table>
+            </div>
+            <div class="card">
+              <h4>Endpoints par ressource</h4>
+              <table>
+                <tr><td>Auth</td><td class="dim">register, login</td><td class="dim">2</td></tr>
+                <tr><td>Livres</td><td class="dim">CRUD + recherche titre/auteur/catégorie</td><td class="dim">8</td></tr>
+                <tr><td>Utilisateurs</td><td class="dim">CRUD + filtre rôle/email</td><td class="dim">7</td></tr>
+                <tr><td>Emprunts</td><td class="dim">créer, retourner, lister, en cours</td><td class="dim">4</td></tr>
+              </table>
+            </div>
+          </div>
+          <div class="notes" hidden>
+            <p>C'est l'étape la plus longue en volume de code, mais la plus courte à présenter : tout ce qu'on montre ici découle directement des diagrammes vus précédemment.</p>
+          </div>
+        </section>
+
+        <!-- ============================================================ SLIDE 14 — ETAPE 07 TESTS -->
+        <section class="slide" data-title="Tests unitaires" data-eyebrow="Étape 07 — Qualité">
+          <div class="slide-head">
+            <span class="eyebrow-chip">Étape 07 — Qualité</span>
+            <h2>33 tests, <em>JUnit 5 + Mockito</em></h2>
+            <p class="slide-sub">Une convention de nommage systématique&nbsp;: <code>action_devraitRésultat_quandCondition</code> — chaque règle de gestion (RG-01 à RG-06) a son test dédié.</p>
+          </div>
+          <div class="grid2" style="flex:1">
+            <div class="card">
+              <h4>Répartition par service</h4>
+              <div class="bars">
+                <div class="bar-row"><span class="lbl">LivreServiceImpl</span><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span><span class="val">14</span></div>
+                <div class="bar-row"><span class="lbl">UserServiceImpl</span><span class="bar-track"><span class="bar-fill" style="width:78%"></span></span><span class="val">11</span></div>
+                <div class="bar-row"><span class="lbl">EmpruntServiceImpl</span><span class="bar-track"><span class="bar-fill" style="width:57%"></span></span><span class="val">8</span></div>
+              </div>
+            </div>
+            <div class="card">
+              <h4>Exemples représentatifs</h4>
+              <ul class="checklist mono" style="font-size:12.5px;gap:11px">
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>emprunterLivre_devraitEchouer_<b>quandLivreIndisponible</b></li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>deleteLivre_devraitEchouer_<b>quandEmpruntEnCours</b></li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>createUser_devraitEchouer_<b>quandEmailDejaExistant</b></li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>retournerLivre_devraitReussir_<b>quandEmpruntEnCours</b></li>
+              </ul>
+            </div>
+          </div>
+          <div class="notes" hidden>
+            <p>On montre volontairement les vrais noms de méthodes de test — ils se lisent presque comme les règles de gestion RG-01 à RG-06 de la diapositive Analyse. Boucle bouclée.</p>
+          </div>
+        </section>
+
+        <!-- ============================================================ SLIDE 15 — ETAPE 08 DOCUMENTATION -->
+        <section class="slide" data-title="Documentation" data-eyebrow="Étape 08 — Documentation">
+          <div class="slide-head">
+            <span class="eyebrow-chip">Étape 08 — Documentation</span>
+            <h2>Documentée pour être <em>reprise</em></h2>
+          </div>
+          <div class="grid2" style="flex:1">
+            <div class="browser-chrome">
+              <div class="bb"><i></i><i></i><i></i><span class="url">localhost:8080/swagger-ui/index.html</span></div>
+              <div class="bc">
+                <p class="mono" style="font-size:11.5px;color:var(--ink-dim);margin:0 0 10px">springdoc-openapi-starter-webmvc-ui · schéma Bearer JWT</p>
+                <table>
+                  <tr><td class="mono" style="color:var(--ok)">POST</td><td>/api/auth/login</td></tr>
+                  <tr><td class="mono" style="color:var(--brass-strong)">GET</td><td>/api/livres</td></tr>
+                  <tr><td class="mono" style="color:var(--brass-strong)">GET</td><td>/api/livres/categorie/{categorie}</td></tr>
+                  <tr><td class="mono" style="color:var(--ok)">POST</td><td>/api/emprunts</td></tr>
+                  <tr><td class="mono" style="color:var(--ink-dim)">PUT</td><td>/api/emprunts/{id}/retour</td></tr>
+                </table>
+              </div>
+            </div>
+            <div class="card">
+              <h4>Documents produits</h4>
+              <ul class="checklist">
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><code>README.md</code> — installation, endpoints, formats</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><code>FUNCTIONAL_SPECIFICATION.md</code></li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><code>TECHNICAL_DOCUMENTATION.md</code></li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Swagger / OpenAPI généré depuis le code</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Mini-rapport technique (PDF)</li>
+              </ul>
+            </div>
+          </div>
+          <div class="notes" hidden>
+            <p>Swagger n'est pas juste "pour la démo" : c'est la documentation vivante, générée depuis le code, donc jamais désynchronisée. On peut le montrer en live ici si la connexion le permet.</p>
+          </div>
+        </section>
+
+        <!-- ============================================================ SLIDE 16 — ETAPE 09 MISE EN PROD -->
+        <section class="slide" data-title="Mise en production & livraison" data-eyebrow="Étape 09 — Livraison">
+          <div class="slide-head">
+            <span class="eyebrow-chip">Étape 09 — Livraison</span>
+            <h2>Du poste local à la <em>démonstration</em></h2>
+          </div>
+          <div class="grid2" style="flex:1">
+            <div class="card">
+              <h4>Build & exécution</h4>
+              <table>
+                <tr><td class="mono" style="font-size:12px">./gradlew build</td><td class="dim">compile, teste, produit le .jar</td></tr>
+                <tr><td class="mono" style="font-size:12px">./gradlew bootRun</td><td class="dim">démarre l'API sur :8080</td></tr>
+                <tr><td class="mono" style="font-size:12px">./gradlew test</td><td class="dim">exécute les 33 tests</td></tr>
+              </table>
+              <p style="margin-top:12px">Configuration MySQL et secret JWT externalisés dans <code>application.properties</code>.</p>
+            </div>
+            <div class="card">
+              <h4>Livrables du CDC — tous remis</h4>
+              <ul class="checklist">
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Code source complet de l'API</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Documentation technique</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Démonstration fonctionnelle (Swagger UI)</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Dépôt Git structuré (19 PR, historique clair)</li>
+              </ul>
+              <p style="margin-top:14px;color:var(--ink-dim);font-size:13px">Perspective&nbsp;: conteneurisation Docker et pipeline CI/CD pour une mise en production continue.</p>
+            </div>
+          </div>
+          <div class="notes" hidden>
+            <p>Être honnête ici : il n'y a pas de Docker ni de pipeline CI dans ce mini-projet, et ce n'est pas grave — le périmètre du CDC est une démonstration locale via Swagger, ce qu'on livre intégralement. On le mentionne comme perspective, pas comme manque caché.</p>
+          </div>
+        </section>
+
+        <!-- ============================================================ SLIDE 17 — BILAN -->
+        <section class="slide" data-title="Bilan — rétrospective" data-eyebrow="Bilan">
+          <div class="slide-head">
+            <span class="eyebrow-chip">Bilan</span>
+            <h2><em>Cinq semaines</em>, une équipe de cinq</h2>
+          </div>
+          <figure class="diagram-figure" style="flex:0 0 auto;height:222px">
+            <svg viewBox="0 0 1100 200" role="img" aria-label="Chronologie du projet du 7 juillet au 10 août 2026, neuf jalons du premier commit au mini-rapport">
+              <line x1="50" y1="100" x2="1050" y2="100" stroke="currentColor" stroke-opacity=".3" stroke-width="1.6"/>
+              <g font-family="IBM Plex Mono, monospace" font-size="10.5">
+                <circle cx="60" cy="100" r="4.5" fill="var(--brass)"/><text x="60" y="80" text-anchor="middle" fill="currentColor">07/07</text><text x="60" y="122" text-anchor="middle" fill="currentColor" opacity=".7">Init + build</text>
+                <circle cx="185" cy="100" r="4.5" fill="var(--brass)"/><text x="185" y="122" text-anchor="middle" fill="currentColor">08/07</text><text x="185" y="80" text-anchor="middle" fill="currentColor" opacity=".7">Analyse + UML</text>
+                <circle cx="310" cy="100" r="4.5" fill="var(--brass)"/><text x="310" y="80" text-anchor="middle" fill="currentColor">12/07</text><text x="310" y="122" text-anchor="middle" fill="currentColor" opacity=".7">Exceptions</text>
+                <circle cx="435" cy="100" r="4.5" fill="var(--brass)"/><text x="435" y="122" text-anchor="middle" fill="currentColor">15/07</text><text x="435" y="80" text-anchor="middle" fill="currentColor" opacity=".7">CRUD user</text>
+                <circle cx="560" cy="100" r="4.5" fill="var(--brass)"/><text x="560" y="80" text-anchor="middle" fill="currentColor">17/07</text><text x="560" y="122" text-anchor="middle" fill="currentColor" opacity=".7">Auth · Livre · Emprunt</text>
+                <circle cx="685" cy="100" r="4.5" fill="var(--brass)"/><text x="685" y="122" text-anchor="middle" fill="currentColor">20/07</text><text x="685" y="80" text-anchor="middle" fill="currentColor" opacity=".7">Tests unitaires</text>
+                <circle cx="810" cy="100" r="4.5" fill="var(--brass)"/><text x="810" y="80" text-anchor="middle" fill="currentColor">21/07</text><text x="810" y="122" text-anchor="middle" fill="currentColor" opacity=".7">IHM + docs</text>
+                <circle cx="935" cy="100" r="4.5" fill="var(--brass)"/><text x="935" y="122" text-anchor="middle" fill="currentColor">26-27/07</text><text x="935" y="80" text-anchor="middle" fill="currentColor" opacity=".7">Swagger</text>
+                <circle cx="1040" cy="100" r="5" fill="var(--ok)"/><text x="1040" y="80" text-anchor="middle" fill="currentColor">10/08</text><text x="1040" y="122" text-anchor="middle" fill="currentColor" opacity=".7">Mini-rapport</text>
+              </g>
+            </svg>
+          </figure>
+          <div class="grid2" style="flex:1;margin-top:8px">
+            <div class="card">
+              <h4>Qui a fait quoi</h4>
+              <table class="table-tight">
+                <tr><td class="mono">Mahefasoa</td><td class="dim">Backend, Swagger, intégration</td></tr>
+                <tr><td class="mono">Finaritra</td><td class="dim">Analyse des besoins, diagrammes UML</td></tr>
+                <tr><td class="mono">Jason</td><td class="dim">Conception de la maquette IHM</td></tr>
+                <tr><td class="mono">YvesLoic5</td><td class="dim">Tests unitaires JUnit 5 / Mockito</td></tr>
+                <tr><td class="mono">Megumi</td><td class="dim">Documentation fonctionnelle & technique</td></tr>
+                <tr><td class="mono">AlphaCoding-404</td><td class="dim">Documentation Swagger / OpenAPI</td></tr>
+              </table>
+            </div>
+            <div class="card" style="display:flex;flex-direction:column;justify-content:center">
+              <div class="stat-row" style="grid-template-columns:1fr 1fr">
+                <div class="stat"><b class="tab">40</b><span>Commits</span></div>
+                <div class="stat"><b class="tab">19</b><span>Pull Requests</span></div>
+                <div class="stat"><b class="tab">33</b><span>Tests unitaires</span></div>
+                <div class="stat"><b class="tab">21</b><span>Endpoints REST</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="notes" hidden>
+            <p>Cette diapositive répond à la question implicite du jury : "qui a fait quoi ?". Les rôles viennent directement de l'historique Git, pas d'une répartition théorique.</p>
+          </div>
+        </section>
+
+        <!-- ============================================================ SLIDE 18 — CONCLUSION -->
+        <section class="slide" data-title="Conclusion & perspectives" data-eyebrow="Conclusion">
+          <div class="slide-head">
+            <span class="eyebrow-chip">Conclusion</span>
+            <h2>Un cycle <em>complet</em>, un socle pour la suite</h2>
+          </div>
+          <div class="grid2" style="flex:1">
+            <div class="card">
+              <h4>Ce que ce projet a démontré</h4>
+              <ul class="checklist">
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Un cycle d'ingénierie logicielle complet, pas seulement du code</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Une architecture en couches conforme au CDC</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Une sécurité JWT réellement testée par rôle</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Un travail d'équipe traçable de bout en bout</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>Perspectives d'évolution</h4>
+              <ul class="checklist">
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Client web ou mobile consommant l'API</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Conteneurisation Docker + pipeline CI/CD</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Pagination et tests d'intégration</li>
+                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Alertes de retard sur les emprunts</li>
+              </ul>
+            </div>
+          </div>
+          <div class="notes" hidden>
+            <p>On boucle sur le contexte de la diapositive 2 : les quatre problèmes initiaux (suivi, pertes, disponibilité, traçabilité) sont désormais couverts par l'API. Les perspectives montrent qu'on a conscience des limites du périmètre mini-projet.</p>
+          </div>
+        </section>
+
+        <!-- ============================================================ SLIDE 19 — MERCI -->
+        <section class="slide closing" data-title="Merci" data-eyebrow="Clôture">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style="color:var(--brass);margin-bottom:22px" aria-hidden="true">
+            <path d="M12 5 C 9 4 5.5 4 3 5 V18 C5.5 17 9 17 12 18 C15 17 18.5 17 21 18 V5 C18.5 4 15 4 12 5 Z" stroke="currentColor" stroke-width="1.2" fill="none"/>
+            <path d="M12 5 V18" stroke="currentColor" stroke-width="1.2"/>
+          </svg>
+          <span class="eyebrow-chip" style="margin-bottom:20px">Merci de votre attention</span>
+          <h2>Des <em>questions</em> ?</h2>
+          <p class="sub" style="margin-top:16px;color:var(--ink-dim)">github.com/MahefasoaRAM/java-project — démonstration Swagger disponible sur demande.</p>
+          <div class="notes" hidden>
+            <p>Rester sur cette diapositive pour les questions. Si on nous demande une démo live, basculer vers Swagger UI (http://localhost:8080/swagger-ui/index.html) avec l'API déjà lancée en arrière-plan.</p>
+          </div>
+        </section>
+
+      </div><!-- /.stage -->
+
+      <div class="navzone prev" id="navPrev"><span class="navhint"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+      <div class="navzone next" id="navNext"><span class="navhint"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+    </div><!-- /.stage-wrap -->
+
+    <div class="presenter-panel">
+      <div class="pp-stats">
+        <div class="cell">
+          <span>Diapositive</span>
+          <b class="tab" id="ppCounter">01 / 20</b>
+        </div>
+        <div class="cell">
+          <span>Heure</span>
+          <b class="tab" id="ppClock">00:00:00</b>
+        </div>
+        <div class="cell">
+          <span>Chronomètre</span>
+          <b class="tab" id="ppTimer">00:00</b>
+          <div class="pp-timer-controls">
+            <button type="button" id="ppTimerToggle">Pause</button>
+            <button type="button" id="ppTimerReset">Reset</button>
+          </div>
+        </div>
+        <div class="cell">
+          <span>Étape</span>
+          <b id="ppEyebrow" style="font-size:13px">—</b>
+        </div>
+      </div>
+
+      <div class="pp-section" style="border-bottom:none;padding-bottom:0">
+        <div class="h">Notes du présentateur</div>
+      </div>
+      <div class="pp-notes" id="ppNotes"></div>
+
+      <div class="pp-next">
+        <div class="h" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--brass-strong);margin-bottom:8px">Diapositive suivante</div>
+        <div class="pp-next-frame" id="ppNextFrame"></div>
+        <div class="pp-next-title" id="ppNextTitle"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kbd-hint" id="kbdHint">
+    <span><kbd>&larr;</kbd> <kbd>&rarr;</kbd> naviguer</span>
+    <span><kbd>P</kbd> présentateur</span>
+    <span><kbd>F</kbd> plein écran</span>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---------- mermaid (UML diagrams) — themed to match the deck's palette ----------
+  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var mermaidVars = prefersDark ? {
+    background:'#141c30', primaryColor:'#1b2740', primaryTextColor:'#eef0f6', primaryBorderColor:'#d9ac68',
+    lineColor:'#93a0c0', secondaryColor:'#1b2740', tertiaryColor:'#141c30', textColor:'#eef0f6',
+    mainBkg:'#1b2740', nodeBorder:'#d9ac68', clusterBkg:'#10162a', clusterBorder:'#d9ac68',
+    edgeLabelBackground:'#141c30', actorBkg:'#1b2740', actorBorder:'#d9ac68', actorTextColor:'#eef0f6',
+    actorLineColor:'#93a0c0', signalColor:'#eef0f6', signalTextColor:'#eef0f6',
+    labelBoxBkgColor:'#1b2740', labelBoxBorderColor:'#d9ac68', labelTextColor:'#eef0f6', loopTextColor:'#eef0f6',
+    noteBkgColor:'#1b2740', noteBorderColor:'#d9ac68', noteTextColor:'#eef0f6',
+    activationBkgColor:'#1b2740', activationBorderColor:'#d9ac68'
+  } : {
+    background:'#fffdf8', primaryColor:'#eadfc4', primaryTextColor:'#201a13', primaryBorderColor:'#96672b',
+    lineColor:'#6b6250', secondaryColor:'#f2ead9', tertiaryColor:'#fffdf8', textColor:'#201a13',
+    mainBkg:'#eadfc4', nodeBorder:'#96672b', clusterBkg:'#f2ead9', clusterBorder:'#96672b',
+    edgeLabelBackground:'#fffdf8', actorBkg:'#eadfc4', actorBorder:'#96672b', actorTextColor:'#201a13',
+    actorLineColor:'#6b6250', signalColor:'#201a13', signalTextColor:'#201a13',
+    labelBoxBkgColor:'#eadfc4', labelBoxBorderColor:'#96672b', labelTextColor:'#201a13', loopTextColor:'#201a13',
+    noteBkgColor:'#f2ead9', noteBorderColor:'#96672b', noteTextColor:'#201a13',
+    activationBkgColor:'#eadfc4', activationBorderColor:'#96672b'
+  };
+  if (window.mermaid){
+    mermaid.initialize({
+      startOnLoad:false,
+      theme:'base',
+      themeVariables:Object.assign({fontFamily:'"Work Sans", sans-serif', fontSize:'15px'}, mermaidVars),
+      flowchart:{useMaxWidth:true},
+      sequence:{useMaxWidth:true, actorMargin:60},
+      securityLevel:'loose'
+    });
+    // wait for webfonts to finish loading before measuring/laying out diagram text,
+    // otherwise boxes get sized against fallback-font metrics and real text overflows them
+    (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function(){
+      mermaid.run({querySelector:'.mermaid'});
+    });
+  }
+
+  var stageWrap = document.getElementById('stageWrap');
+  var stage = document.getElementById('stage');
+  var slides = Array.prototype.slice.call(stage.querySelectorAll('.slide'));
+  var total = slides.length;
+  var current = 0;
+  var mode = 'spectator';
+
+  var body = document.body;
+  var topbar = document.getElementById('topbar');
+  var btnSpectator = document.getElementById('btn-spectator');
+  var btnPresenter = document.getElementById('btn-presenter');
+  var btnFullscreen = document.getElementById('btn-fullscreen');
+  var btnOpenPresenter = document.getElementById('btn-open-presenter');
+  var navPrev = document.getElementById('navPrev');
+  var navNext = document.getElementById('navNext');
+  var kbdHint = document.getElementById('kbdHint');
+  var toast = document.getElementById('toast');
+
+  var SYNC_KEY = 'mediatheque-deck-sync-v1';
+  var isPresenterWindow = /(^|[#&])presenter([&]|$)/.test(location.hash);
+  var isPaired = false;
+  var suppressBroadcast = false;
+
+  var ppCounter = document.getElementById('ppCounter');
+  var ppEyebrow = document.getElementById('ppEyebrow');
+  var ppNotes = document.getElementById('ppNotes');
+  var ppNextFrame = document.getElementById('ppNextFrame');
+  var ppNextTitle = document.getElementById('ppNextTitle');
+  var ppClock = document.getElementById('ppClock');
+  var ppTimer = document.getElementById('ppTimer');
+  var ppTimerToggle = document.getElementById('ppTimerToggle');
+  var ppTimerReset = document.getElementById('ppTimerReset');
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+
+  // ---------- persistence (per-viewer convenience only) ----------
+  function loadState(){
+    try{
+      var s = JSON.parse(localStorage.getItem('mediatheque-deck-state') || '{}');
+      if (typeof s.index === 'number' && s.index >= 0 && s.index < total) current = s.index;
+      if (s.mode === 'presenter') mode = 'presenter';
+    }catch(e){}
+    // a paired window (opened via "Vue présentateur") should start on whatever
+    // slide the other window is currently showing, not this window's own history
+    try{
+      var sync = JSON.parse(localStorage.getItem(SYNC_KEY) || 'null');
+      if (sync && typeof sync.index === 'number' && sync.index >= 0 && sync.index < total){
+        current = sync.index;
+      }
+    }catch(e){}
+  }
+  function saveState(){
+    try{
+      localStorage.setItem('mediatheque-deck-state', JSON.stringify({index:current, mode:mode}));
+    }catch(e){}
+  }
+
+  // ---------- cross-window sync (same browser, two tabs/windows of this artifact) ----------
+  function broadcastIndex(){
+    try{
+      localStorage.setItem(SYNC_KEY, JSON.stringify({index:current, ts:Date.now()}));
+    }catch(e){}
+  }
+  window.addEventListener('storage', function(e){
+    if (e.key !== SYNC_KEY || !e.newValue) return;
+    try{
+      var data = JSON.parse(e.newValue);
+      if (typeof data.index === 'number' && data.index >= 0 && data.index < total && data.index !== current){
+        suppressBroadcast = true;
+        current = data.index;
+        render();
+        suppressBroadcast = false;
+      }
+    }catch(err){}
+  });
+
+  // ---------- stage scaling ----------
+  function fitStage(){
+    var w = stageWrap.clientWidth;
+    var h = stageWrap.clientHeight;
+    var scale = Math.min(w/1280, h/720);
+    stage.style.transform = 'scale(' + scale + ')';
+    updateNextThumb(); // thumb scale depends on frame size too
+  }
+
+  // ---------- render ----------
+  function render(){
+    slides.forEach(function(s, i){
+      var active = i === current;
+      s.classList.toggle('is-active', active);
+      s.setAttribute('aria-hidden', active ? 'false' : 'true');
+    });
+    var idx = pad(current+1) + ' / ' + pad(total);
+    ppCounter.textContent = idx;
+
+    var s = slides[current];
+    ppEyebrow.textContent = s.getAttribute('data-eyebrow') || '—';
+
+    var notesEl = s.querySelector('.notes');
+    ppNotes.innerHTML = notesEl ? notesEl.innerHTML : '';
+
+    updateNextThumb();
+    updateFootProgress();
+    saveState();
+    if (!suppressBroadcast) broadcastIndex();
+  }
+
+  function updateFootProgress(){
+    // nothing persistent needed; progress shown via presenter counter only
+  }
+
+  function updateNextThumb(){
+    if (mode !== 'presenter') return;
+    var nextIdx = (current + 1) % total;
+    var nextSlide = slides[nextIdx];
+    ppNextFrame.innerHTML = '';
+    var clip = nextSlide.cloneNode(true);
+    clip.classList.add('is-active');
+    clip.className = 'slide is-active thumb-clip';
+    var hiddenNotes = clip.querySelector('.notes');
+    if (hiddenNotes) hiddenNotes.remove();
+    var frameW = ppNextFrame.clientWidth || 1;
+    var scale = frameW / 1280;
+    clip.style.transform = 'scale(' + scale + ')';
+    clip.style.position = 'absolute';
+    clip.style.top = '0';
+    clip.style.left = '0';
+    ppNextFrame.appendChild(clip);
+    var title = nextSlide.getAttribute('data-title') || '';
+    ppNextTitle.innerHTML = '<b>' + (nextIdx+1) + '.</b> ' + title;
+  }
+
+  function go(delta){
+    current = (current + delta + total) % total;
+    render();
+  }
+  function goTo(i){
+    current = Math.max(0, Math.min(total-1, i));
+    render();
+  }
+
+  // ---------- mode ----------
+  function setMode(next){
+    mode = next;
+    body.setAttribute('data-mode', mode);
+    btnSpectator.classList.toggle('active', mode === 'spectator');
+    btnPresenter.classList.toggle('active', mode === 'presenter');
+    requestAnimationFrame(fitStage);
+    if (mode === 'presenter') startTimerIfNeeded();
+    saveState();
+  }
+  btnSpectator.addEventListener('click', function(){ setMode('spectator'); });
+  btnPresenter.addEventListener('click', function(){ setMode('presenter'); });
+
+  // ---------- toast ----------
+  function showToast(html){
+    toast.innerHTML = html;
+    toast.hidden = false;
+  }
+  function hideToast(){ toast.hidden = true; }
+
+  // ---------- open a paired presenter window (like PowerPoint / Canva) ----------
+  function openPresenterWindow(){
+    var url = location.href.split('#')[0] + '#presenter';
+    var win = null;
+    try{ win = window.open(url, 'mediatheque_presenter_view', 'width=1440,height=920'); }catch(e){ win = null; }
+
+    if (!win){
+      showToast(
+        '<span>Votre navigateur a bloqué l\'ouverture automatique d\'une nouvelle fenêtre. ' +
+        'Copiez ce lien et ouvrez-le vous-même dans un nouvel onglet&nbsp;:</span>' +
+        '<button type="button" class="toast-link" id="toastCopyLink">Copier le lien présentateur</button>' +
+        '<button type="button" class="toast-close" id="toastClose" aria-label="Fermer">&times;</button>'
+      );
+      document.getElementById('toastClose').addEventListener('click', hideToast);
+      document.getElementById('toastCopyLink').addEventListener('click', function(){
+        var btn = this;
+        (navigator.clipboard && navigator.clipboard.writeText
+          ? navigator.clipboard.writeText(url)
+          : Promise.reject()
+        ).then(function(){
+          btn.textContent = 'Lien copié ✓';
+          setTimeout(hideToast, 2200);
+        }).catch(function(){
+          window.prompt('Copiez ce lien manuellement :', url);
+        });
+      });
+      return;
+    }
+
+    isPaired = true;
+    btnOpenPresenter.classList.add('is-paired');
+    btnOpenPresenter.querySelector('span').textContent = 'Fenêtre présentateur ouverte';
+    setMode('spectator');
+    try{ document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); }catch(e){}
+  }
+  btnOpenPresenter.addEventListener('click', openPresenterWindow);
+
+  // ---------- fullscreen ----------
+  function toggleFullscreen(){
+    try{
+      if (!document.fullscreenElement){ document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); }
+      else { document.exitFullscreen && document.exitFullscreen(); }
+    }catch(e){}
+  }
+  btnFullscreen.addEventListener('click', toggleFullscreen);
+  window.addEventListener('resize', fitStage);
+  document.addEventListener('fullscreenchange', fitStage);
+
+  // ---------- nav zones / keyboard ----------
+  navPrev.addEventListener('click', function(){ go(-1); });
+  navNext.addEventListener('click', function(){ go(1); });
+
+  document.addEventListener('keydown', function(e){
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+    switch(e.key){
+      case 'ArrowRight': case 'ArrowDown': case 'PageDown': case ' ':
+        e.preventDefault(); go(1); break;
+      case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
+        e.preventDefault(); go(-1); break;
+      case 'Home': goTo(0); break;
+      case 'End': goTo(total-1); break;
+      case 'p': case 'P':
+        setMode(mode === 'presenter' ? 'spectator' : 'presenter'); break;
+      case 'f': case 'F':
+        toggleFullscreen(); break;
+    }
+  });
+
+  // ---------- idle topbar (spectator only) ----------
+  var idleTimer = null;
+  function wakeChrome(){
+    topbar.classList.remove('idle');
+    clearTimeout(idleTimer);
+    if (mode === 'spectator'){
+      idleTimer = setTimeout(function(){ topbar.classList.add('idle'); }, 2600);
+    }
+  }
+  ['mousemove','mousedown','touchstart'].forEach(function(evt){
+    document.addEventListener(evt, wakeChrome);
+  });
+
+  // hide the keyboard hint after first interaction / a few seconds
+  var hintShown = true;
+  function hideHint(){
+    if (!hintShown) return;
+    hintShown = false;
+    kbdHint.style.opacity = '0';
+    setTimeout(function(){ kbdHint.style.display = 'none'; }, 700);
+  }
+  setTimeout(hideHint, 5200);
+  document.addEventListener('keydown', hideHint, {once:true});
+  navNext.addEventListener('click', hideHint, {once:true});
+  navPrev.addEventListener('click', hideHint, {once:true});
+
+  // ---------- clock ----------
+  function tickClock(){
+    var d = new Date();
+    ppClock.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  }
+  setInterval(tickClock, 1000);
+  tickClock();
+
+  // ---------- timer ----------
+  var elapsed = 0, timerRunning = false, timerHandle = null;
+  function renderTimer(){
+    var m = Math.floor(elapsed/60), s = elapsed%60;
+    ppTimer.textContent = pad(m) + ':' + pad(s);
+  }
+  function startTimerIfNeeded(){
+    if (timerRunning || timerHandle) return;
+    timerRunning = true;
+    ppTimerToggle.textContent = 'Pause';
+    timerHandle = setInterval(function(){ elapsed++; renderTimer(); }, 1000);
+  }
+  function pauseTimer(){
+    timerRunning = false;
+    ppTimerToggle.textContent = 'Reprendre';
+    clearInterval(timerHandle);
+    timerHandle = null;
+  }
+  ppTimerToggle.addEventListener('click', function(){
+    if (timerRunning) pauseTimer(); else startTimerIfNeeded();
+  });
+  ppTimerReset.addEventListener('click', function(){
+    elapsed = 0; renderTimer();
+  });
+  renderTimer();
+
+  // ---------- boot ----------
+  loadState();
+  if (isPresenterWindow){
+    mode = 'presenter';
+    btnOpenPresenter.style.display = 'none';
+  }
+  setMode(mode);
+  render();
+  requestAnimationFrame(fitStage);
+  wakeChrome();
+})();
+</script>
+</body>
+</html>
