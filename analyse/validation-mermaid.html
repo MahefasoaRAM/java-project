@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Validation des diagrammes Mermaid</title>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; margin: 20px; }
+  h1 { color: #2c3e50; }
+  .section { background: white; border-radius: 8px; padding: 16px; margin-bottom: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+  .ok { color: #27ae60; font-weight: 600; }
+  .ko { color: #e74c3c; font-weight: 600; }
+  pre { background: #f0f0f0; padding: 8px; font-size: 12px; overflow: auto; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Validation des diagrammes Mermaid — analyse/</h1>
+<div id="status"></div>
+<div id="results"></div>
+
+<!-- Sources .mmd intégrés directement : pas de fetch(), donc pas de blocage CORS en file:// -->
+<script type="text/plain" id="src-uml-cas-utilisation">
+%% ═════════════════════════════════════════════════════════════
+%% Diagramme de cas d'utilisation – Médiathèque
+%% Acteurs en stickman, relations «include» / «extend» et héritage
+%% ═════════════════════════════════════════════════════════════
+flowchart LR
+
+    %% ── Acteurs (stickman) ──
+    ADMIN(["🧍<br/><b>Administrateur</b>"])
+    UTILISATEUR(["🧍<br/><b>Utilisateur</b>"])
+
+    %% Héritage d'acteurs : Administrateur hérite d'Utilisateur
+    ADMIN -.->|"hérite de (généralisation)"| UTILISATEUR
+
+    %% ── Système ──
+    subgraph SYSTEME["Système Médiathèque"]
+        direction TB
+        UC0(["Se connecter"])
+        UC1(["Consulter le catalogue"])
+        UC2(["Emprunter un livre"])
+        UC3(["Retourner un livre"])
+        UC4(["Ajouter un livre"])
+        UC5(["Modifier un livre"])
+        UC6(["Supprimer un livre"])
+        UC7(["Consulter les emprunts"])
+        UC8(["Gérer les utilisateurs"])
+
+        %% «include» : Se connecter est obligatoire avant tout cas protégé
+        UC2 -.->|"«include»"| UC0
+        UC3 -.->|"«include»"| UC0
+        UC4 -.->|"«include»"| UC0
+        UC5 -.->|"«include»"| UC0
+        UC6 -.->|"«include»"| UC0
+        UC7 -.->|"«include»"| UC0
+        UC8 -.->|"«include»"| UC0
+
+        %% «extend» : Consulter le détail étend optionnellement le catalogue
+        UCD(["Consulter le détail d'un livre"])
+        UCD -.->|"«extend»"| UC1
+    end
+
+    %% ── Associations acteur → cas d'utilisation ──
+    UTILISATEUR --> UC1
+    UTILISATEUR --> UC2
+    UTILISATEUR --> UC3
+
+    ADMIN --> UC4
+    ADMIN --> UC5
+    ADMIN --> UC6
+    ADMIN --> UC7
+    ADMIN --> UC8
+</script>
+
+<script type="text/plain" id="src-uml-classes">
+%% ═════════════════════════════════════════════════════════════
+%% Diagramme de classes – Modèle entité-relation
+%% Classes principales uniquement : Utilisateur, Livre, Emprunt
+%% ═════════════════════════════════════════════════════════════
+classDiagram
+    direction LR
+
+    class Utilisateur {
+        +Long id
+        +String nom
+        +String email
+        +String password
+        +RoleUser role
+    }
+
+    class Livre {
+        +Long id
+        +String titre
+        +String auteur
+        +String categorie
+        +boolean disponible
+    }
+
+    class Emprunt {
+        +Long id
+        +LocalDate dateEmprunt
+        +LocalDate dateRetourPrevue
+        +EmpruntStatus statut
+    }
+
+    class RoleUser {
+        <<enumeration>>
+        ADMIN
+        USER
+    }
+
+    class EmpruntStatus {
+        <<enumeration>>
+        EN_COURS
+        TERMINE
+    }
+
+    %% ── Associations (cardinalités UML) ──
+    Utilisateur "1" --> "0..*" Emprunt : effectue
+    Livre "1" --> "0..*" Emprunt : concerné par
+
+    %% ── Énumérations liées aux entités ──
+    Utilisateur ..> RoleUser : utilise
+    Emprunt ..> EmpruntStatus : utilise
+</script>
+
+<script type="text/plain" id="src-uml-sequence-emprunt">
+%% ═════════════════════════════════════════════════════════════
+%% Diagramme de séquence – Cas d'utilisation « Emprunter un livre »
+%% Acteur : Utilisateur — un seul cas d'utilisation par diagramme
+%% Règles RG-01/RG-02 : livre disponible, un seul emprunt actif par livre
+%% ═════════════════════════════════════════════════════════════
+sequenceDiagram
+    actor Utilisateur
+    participant API as EmpruntController
+    participant SVC as EmpruntService
+    participant UREPO as UserRepository
+    participant LREPO as LivreRepository
+    participant EREPO as EmpruntRepository
+
+    Utilisateur->>API: 1. POST /api/emprunts { livreId, dateRetourPrevue }
+    activate API
+    API->>SVC: 2. emprunterLivre(empruntRequest)
+    activate SVC
+
+    SVC->>UREPO: 3. findById(utilisateurId)  [utilisateur connecté via JWT]
+    activate UREPO
+    UREPO-->>SVC: 4. Utilisateur | ResourceNotFoundException
+    deactivate UREPO
+
+    SVC->>LREPO: 5. findById(livreId)
+    activate LREPO
+    LREPO-->>SVC: 6. Livre | ResourceNotFoundException
+    deactivate LREPO
+
+    alt Utilisateur ou livre introuvable
+        SVC-->>API: 7a. ResourceNotFoundException
+        API-->>Utilisateur: 8a. 404 Not Found { erreur }
+    else Livre indisponible (RG-01/RG-02)
+        SVC-->>API: 7b. DataConflictException
+        API-->>Utilisateur: 8b. 409 Conflict { message: "Livre indisponible" }
+    else Livre disponible
+        SVC->>LREPO: 7c. save(livre.setDisponible(false))
+        activate LREPO
+        LREPO-->>SVC: 8c. LivreDTO (disponible = false)
+        deactivate LREPO
+        SVC->>EREPO: 9c. save(newEmprunt)
+        activate EREPO
+        EREPO-->>SVC: 10c. EmpruntDTO (statut = EN_COURS)
+        deactivate EREPO
+        SVC-->>API: 11c. EmpruntDTO
+        deactivate SVC
+        API-->>Utilisateur: 12c. 201 Created { empruntDTO }
+        deactivate API
+    end
+</script>
+
+<script type="text/plain" id="src-uml-sequence-admin">
+%% ═════════════════════════════════════════════════════════════
+%% Diagramme de séquence – Cas d'utilisation « Ajouter un livre »
+%% Acteur : Administrateur — un seul cas d'utilisation par diagramme
+%% ═════════════════════════════════════════════════════════════
+sequenceDiagram
+    actor Admin
+    participant API as LivreController
+    participant SVC as LivreService
+    participant REPO as LivreRepository
+
+    Admin->>API: 1. POST /api/livres { titre, auteur, categorie }
+    activate API
+    API->>SVC: 2. ajouterLivre(livreRequest)
+    activate SVC
+    SVC->>SVC: 3. Vérifier unicité du titre
+    SVC->>REPO: 4. save(newLivre)
+    activate REPO
+    REPO-->>SVC: 5. livreEnregistré (id généré)
+    deactivate REPO
+    SVC-->>API: 6. LivreDTO
+    deactivate SVC
+    API-->>Admin: 7. 201 Created { livreDTO }
+    deactivate API
+</script>
+
+<script type="text/plain" id="src-uml-sequence-retour">
+%% ═════════════════════════════════════════════════════════════
+%% Diagramme de séquence – Cas d'utilisation « Retourner un livre »
+%% Acteur : Utilisateur — un seul cas d'utilisation par diagramme
+%% Règle RG-04 : le retour rend automatiquement le livre disponible
+%% ═════════════════════════════════════════════════════════════
+sequenceDiagram
+    actor Utilisateur
+    participant API as EmpruntController
+    participant SVC as EmpruntService
+    participant EREPO as EmpruntRepository
+    participant LREPO as LivreRepository
+
+    Utilisateur->>API: 1. PUT /api/emprunts/{id}/retour
+    activate API
+    API->>SVC: 2. retournerLivre(empruntId)
+    activate SVC
+
+    SVC->>EREPO: 3. findById(empruntId)
+    activate EREPO
+    EREPO-->>SVC: 4. Emprunt | NotFoundException
+    deactivate EREPO
+
+    alt Emprunt déjà terminé
+        SVC-->>API: 5a. DataConflictException
+        API-->>Utilisateur: 6a. 409 Conflict { message: "Emprunt déjà terminé" }
+    else Emprunt en cours
+        SVC->>SVC: 5b. emprunt.setStatut(TERMINE)
+        SVC->>EREPO: 6b. save(emprunt)
+        activate EREPO
+        EREPO-->>SVC: 7b. EmpruntDTO (statut = TERMINE)
+        deactivate EREPO
+        SVC->>LREPO: 8b. save(livre.setDisponible(true))  [RG-04]
+        activate LREPO
+        LREPO-->>SVC: 9b. LivreDTO (disponible = true)
+        deactivate LREPO
+        SVC-->>API: 10b. EmpruntDTO
+        deactivate SVC
+        API-->>Utilisateur: 11b. 200 OK { empruntDTO }
+        deactivate API
+    end
+</script>
+
+<script type="text/plain" id="src-uml-sequence-supprimer-livre">
+%% ═════════════════════════════════════════════════════════════
+%% Diagramme de séquence – Cas d'utilisation « Supprimer un livre »
+%% Acteur : Administrateur — un seul cas d'utilisation par diagramme
+%% Règle de gestion RG-06 : pas de suppression si emprunt en cours
+%% ═════════════════════════════════════════════════════════════
+sequenceDiagram
+    actor Admin
+    participant API as LivreController
+    participant SVC as LivreService
+    participant LREPO as LivreRepository
+    participant EREPO as EmpruntRepository
+
+    Admin->>API: 1. DELETE /api/livres/{id}
+    activate API
+    API->>SVC: 2. supprimerLivre(id)
+    activate SVC
+
+    SVC->>LREPO: 3. findById(id)
+    activate LREPO
+    LREPO-->>SVC: 4. Livre | NotFoundException
+    deactivate LREPO
+
+    alt Livre introuvable
+        SVC-->>API: 5a. ResourceNotFoundException
+        API-->>Admin: 6a. 404 Not Found { erreur }
+    else Livre trouvé
+        SVC->>EREPO: 5b. existsByLivreIdAndStatut(id, EN_COURS)
+        activate EREPO
+        EREPO-->>SVC: 6b. true | false
+        deactivate EREPO
+
+        alt Emprunt en cours sur ce livre
+            SVC-->>API: 7b. DataConflictException (RG-06)
+            API-->>Admin: 8b. 409 Conflict { message: "Livre avec emprunts en cours" }
+        else Aucun emprunt en cours
+            SVC->>LREPO: 7c. deleteById(id)
+            activate LREPO
+            LREPO-->>SVC: 8c. livre supprimé
+            deactivate LREPO
+            SVC-->>API: 9c. void
+            API-->>Admin: 10c. 204 No Content
+        end
+    end
+    deactivate SVC
+    deactivate API
+</script>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' });
+
+  const files = [
+    'uml-cas-utilisation',
+    'uml-classes',
+    'uml-sequence-emprunt',
+    'uml-sequence-admin',
+    'uml-sequence-retour',
+    'uml-sequence-supprimer-livre'
+  ];
+
+  const results = document.getElementById('results');
+  const status = document.getElementById('status');
+
+  async function run() {
+    for (const f of files) {
+      const section = document.createElement('div');
+      section.className = 'section';
+      const title = document.createElement('h3');
+      title.textContent = f + '.mmd';
+      section.appendChild(title);
+      results.appendChild(section);
+
+      try {
+        const code = document.getElementById('src-' + f).textContent;
+        const { svg } = await mermaid.render('mmd-' + f.replace(/\W/g, '-'), code);
+        section.insertAdjacentHTML('beforeend', svg);
+        title.innerHTML = f + '.mmd — <span class="ok">✓ OK</span>';
+      } catch (e) {
+        title.innerHTML = f + '.mmd — <span class="ko">✗ ERREUR</span>';
+        const pre = document.createElement('pre');
+        pre.textContent = String(e && e.message ? e.message : e);
+        section.appendChild(pre);
+      }
+    }
+    status.textContent = 'Validation terminée.';
+  }
+  run();
+</script>
+</body>
+</html>
