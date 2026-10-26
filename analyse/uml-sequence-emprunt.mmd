@@ -1,28 +1,49 @@
+%% ═════════════════════════════════════════════════════════════
+%% Diagramme de séquence – Cas d'utilisation « Emprunter un livre »
+%% Acteur : Utilisateur
+%% Un seul cas d'utilisation par diagramme
+%% Règles RG-01/RG-02 : livre disponible, un seul emprunt actif par livre
+%% ═════════════════════════════════════════════════════════════
 sequenceDiagram
-    actor Client
-    participant EmpruntController
-    participant EmpruntService
-    participant LivreRepository
-    participant UtilisateurRepository
-    participant EmpruntRepository
+    actor Utilisateur
+    participant API as EmpruntController
+    participant SVC as EmpruntService
+    participant UREPO as UserRepository
+    participant LREPO as LivreRepository
+    participant EREPO as EmpruntRepository
 
-    Client->>EmpruntController: POST /api/emprunts { livreId, utilisateurId, dateRetourPrevue }
+    Utilisateur->>API: 1. POST /api/emprunts { livreId, dateRetourPrevue }
+    activate API
+    API->>SVC: 2. emprunterLivre(empruntRequest)
+    activate SVC
 
-    EmpruntController->>EmpruntService: emprunterLivre(dto)
+    SVC->>UREPO: 3. findById(utilisateurId)  [utilisateur connecté via JWT]
+    activate UREPO
+    UREPO-->>SVC: 4. Utilisateur | ResourceNotFoundException
+    deactivate UREPO
 
-    EmpruntService->>UtilisateurRepository: findById(utilisateurId)
-    UtilisateurRepository-->>EmpruntService: Utilisateur | NotFoundException
+    SVC->>LREPO: 5. findById(livreId)
+    activate LREPO
+    LREPO-->>SVC: 6. Livre | ResourceNotFoundException
+    deactivate LREPO
 
-    EmpruntService->>LivreRepository: findById(livreId)
-    LivreRepository-->>EmpruntService: Livre | NotFoundException
-
-    alt Livre indisponible
-        EmpruntService-->>EmpruntController: LivreIndisponibleException
-        EmpruntController-->>Client: 409 Conflict { message: "Livre indisponible" }
+    alt Utilisateur ou livre introuvable
+        SVC-->>API: 7a. ResourceNotFoundException
+        API-->>Utilisateur: 8a. 404 Not Found { erreur }
+    else Livre indisponible (RG-01/RG-02)
+        SVC-->>API: 7b. DataConflictException
+        API-->>Utilisateur: 8b. 409 Conflict { message: "Livre indisponible" }
     else Livre disponible
-        EmpruntService->>LivreRepository: save(livre.setDisponible(false))
-        EmpruntService->>EmpruntRepository: save(newEmprunt)
-        EmpruntRepository-->>EmpruntService: EmpruntDTO
-        EmpruntService-->>EmpruntController: EmpruntDTO
-        EmpruntController-->>Client: 201 Created { empruntDTO }
+        SVC->>LREPO: 7c. save(livre.setDisponible(false))
+        activate LREPO
+        LREPO-->>SVC: 8c. LivreDTO (disponible = false)
+        deactivate LREPO
+        SVC->>EREPO: 9c. save(newEmprunt)
+        activate EREPO
+        EREPO-->>SVC: 10c. EmpruntDTO (statut = EN_COURS)
+        deactivate EREPO
+        SVC-->>API: 11c. EmpruntDTO
+        deactivate SVC
+        API-->>Utilisateur: 12c. 201 Created { empruntDTO }
+        deactivate API
     end

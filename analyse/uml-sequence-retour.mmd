@@ -1,0 +1,41 @@
+%% ═════════════════════════════════════════════════════════════
+%% Diagramme de séquence – Cas d'utilisation « Retourner un livre »
+%% Acteur : Utilisateur
+%% Un seul cas d'utilisation par diagramme
+%% Règle RG-04 : le retour rend automatiquement le livre disponible
+%% ═════════════════════════════════════════════════════════════
+sequenceDiagram
+    actor Utilisateur
+    participant API as EmpruntController
+    participant SVC as EmpruntService
+    participant EREPO as EmpruntRepository
+    participant LREPO as LivreRepository
+
+    Utilisateur->>API: 1. PUT /api/emprunts/{id}/retour
+    activate API
+    API->>SVC: 2. retournerLivre(empruntId)
+    activate SVC
+
+    SVC->>EREPO: 3. findById(empruntId)
+    activate EREPO
+    EREPO-->>SVC: 4. Emprunt | NotFoundException
+    deactivate EREPO
+
+    alt Emprunt déjà terminé
+        SVC-->>API: 5a. DataConflictException
+        API-->>Utilisateur: 6a. 409 Conflict { message: "Emprunt déjà terminé" }
+    else Emprunt en cours
+        SVC->>SVC: 5b. emprunt.setStatut(TERMINE)
+        SVC->>EREPO: 6b. save(emprunt)
+        activate EREPO
+        EREPO-->>SVC: 7b. EmpruntDTO (statut = TERMINE)
+        deactivate EREPO
+        SVC->>LREPO: 8b. save(livre.setDisponible(true))  [RG-04]
+        activate LREPO
+        LREPO-->>SVC: 9b. LivreDTO (disponible = true)
+        deactivate LREPO
+        SVC-->>API: 10b. EmpruntDTO
+        deactivate SVC
+        API-->>Utilisateur: 11b. 200 OK { empruntDTO }
+        deactivate API
+    end

@@ -1,0 +1,46 @@
+%% ═════════════════════════════════════════════════════════════
+%% Diagramme de séquence – Cas d'utilisation « Supprimer un livre »
+%% Acteur : Administrateur
+%% Un seul cas d'utilisation par diagramme (avec scénarios alternatifs)
+%% Règle de gestion RG-06 : pas de suppression si emprunt en cours
+%% ═════════════════════════════════════════════════════════════
+sequenceDiagram
+    actor Admin
+    participant API as LivreController
+    participant SVC as LivreService
+    participant LREPO as LivreRepository
+    participant EREPO as EmpruntRepository
+
+    Admin->>API: 1. DELETE /api/livres/{id}
+    activate API
+    API->>SVC: 2. supprimerLivre(id)
+    activate SVC
+
+    SVC->>LREPO: 3. findById(id)
+    activate LREPO
+    LREPO-->>SVC: 4. Livre | NotFoundException
+    deactivate LREPO
+
+    alt Livre introuvable
+        SVC-->>API: 5a. ResourceNotFoundException
+        API-->>Admin: 6a. 404 Not Found { erreur }
+    else Livre trouvé
+        SVC->>EREPO: 5b. existsByLivreIdAndStatut(id, EN_COURS)
+        activate EREPO
+        EREPO-->>SVC: 6b. true | false
+        deactivate EREPO
+
+        alt Emprunt en cours sur ce livre
+            SVC-->>API: 7b. DataConflictException (RG-06)
+            API-->>Admin: 8b. 409 Conflict { message: "Livre avec emprunts en cours" }
+        else Aucun emprunt en cours
+            SVC->>LREPO: 7c. deleteById(id)
+            activate LREPO
+            LREPO-->>SVC: 8c. livre supprimé
+            deactivate LREPO
+            SVC-->>API: 9c. void
+            API-->>Admin: 10c. 204 No Content
+        end
+    end
+    deactivate SVC
+    deactivate API
