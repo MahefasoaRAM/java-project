@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maquettes IHM — Médiathèque numérique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,650&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --canvas:#E6E9ED;
+    --app:#F5F7F8;
+    --surface:#FFFFFF;
+    --ink:#18212B;
+    --muted:#5B6673;
+    --line:#D8DEE4;
+    --line-soft:#E9EDF0;
+    --field:#F6F8F9;
+
+    --green:#1F5C4E;
+    --green-soft:#E2EFEA;
+    --amber:#8F5A00;
+    --amber-soft:#FBEFD6;
+    --red:#B42318;
+    --red-soft:#FDECEA;
+    --blue:#24508F;
+    --blue-soft:#E4ECF7;
+    --flow:#2F6FED;          /* flèches de navigation, comme un prototype */
+    --note:#FFF7D6;
+
+    --serif:"Literata", Georgia, serif;
+    --sans:"Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--canvas);color:var(--ink);font:14px/1.5 var(--sans);}
+  code{font-family:var(--mono);font-size:.88em;}
+  svg.i{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+
+  /* ═════════ Canevas ═════════ */
+  .canvas{
+    padding:80px;
+    background-image:radial-gradient(#C9CFD6 1px, transparent 1px);
+    background-size:24px 24px;
+    width:max-content;
+    min-width:100%;
+  }
+  .doc-head{max-width:1280px;margin-bottom:72px;}
+  .doc-head h1{font-family:var(--serif);font-weight:650;font-size:56px;line-height:1.05;letter-spacing:-.015em;margin:0 0 16px;}
+  .doc-head p{font-size:18px;color:var(--muted);margin:0 0 28px;max-width:68ch;}
+  .legend{display:flex;flex-wrap:wrap;gap:14px 36px;font-size:15px;color:var(--muted);}
+  .legend span{display:inline-flex;align-items:center;gap:10px;}
+  .sw-frame{width:34px;height:22px;background:var(--surface);border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.15);}
+  .sw-hot{width:34px;height:22px;border:2px solid var(--flow);border-radius:4px;background:rgba(47,111,237,.08);}
+  .sw-arrow{width:44px;height:2px;background:var(--flow);position:relative;}
+  .sw-arrow::after{content:"";position:absolute;right:-2px;top:-5px;border:6px solid transparent;border-left:9px solid var(--flow);border-right:0;}
+  .sw-note{width:34px;height:22px;background:var(--note);border:1px solid #EAD98F;border-radius:3px;}
+
+  .planche{position:relative;margin-bottom:140px;width:max-content;}
+  .planche-head{margin-bottom:36px;max-width:1280px;}
+  .planche-head h2{font-family:var(--serif);font-weight:650;font-size:38px;line-height:1.15;margin:0 0 8px;}
+  .planche-head p{font-size:17px;color:var(--muted);margin:0;max-width:80ch;}
+  .ucs{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+  .ucs span{font-size:14px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px 12px;color:var(--muted);}
+  .ucs b{color:var(--ink);font-weight:600;}
+
+  .board{display:grid;gap:110px 240px;align-items:start;}
+  .links{position:absolute;inset:0;pointer-events:none;overflow:visible;}
+
+  /* ═════════ Cadre d'écran ═════════ */
+  .frame{width:1280px;}
+  .frame-label{font-size:15px;color:var(--muted);margin:0 0 10px 2px;display:flex;gap:10px;align-items:baseline;}
+  .frame-label b{color:var(--ink);font-weight:600;}
+  .frame-label .fid{font-family:var(--mono);font-size:13px;background:var(--ink);color:#fff;border-radius:4px;padding:1px 7px;}
+  .screen{
+    width:1280px;height:800px;
+    background:var(--app);
+    border-radius:8px;
+    overflow:hidden;
+    position:relative;
+    box-shadow:0 1px 2px rgba(24,33,43,.08),0 10px 30px rgba(24,33,43,.10);
+    display:grid;
+    grid-template-columns:236px 1fr;
+    grid-template-rows:64px 1fr;
+  }
+
+  /* Barre du haut */
+  .topbar{grid-column:1 / -1;display:flex;align-items:center;gap:16px;padding:0 24px;background:var(--surface);border-bottom:1px solid var(--line);}
+  .brand{display:flex;align-items:center;gap:10px;width:188px;}
+  .brand strong{font-family:var(--serif);font-size:19px;font-weight:650;}
+  .mark{width:30px;height:30px;border-radius:7px;background:var(--green);position:relative;flex:none;}
+  .mark::before,.mark::after{content:"";position:absolute;top:7px;bottom:7px;width:7px;background:#fff;border-radius:1px 2px 2px 1px;}
+  .mark::before{left:7px;}
+  .mark::after{left:16px;opacity:.65;transform:skewX(-8deg);}
+  .crumbs{flex:1;font-size:14px;color:var(--muted);display:flex;gap:8px;align-items:center;}
+  .crumbs b{color:var(--ink);font-weight:600;}
+  .crumbs i{font-style:normal;color:#A3ACB5;}
+  .who{display:flex;align-items:center;gap:10px;font-size:14px;}
+  .avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;background:var(--green-soft);color:var(--green);flex:none;}
+  .avatar.admin{background:var(--blue-soft);color:var(--blue);}
+  .who-name{line-height:1.2;}
+  .who-name small{display:block;color:var(--muted);font-size:12px;}
+  .logout{margin-left:8px;display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;border:1px solid var(--line);border-radius:6px;padding:6px 10px;}
+
+  /* Menu latéral */
+  .side{background:var(--surface);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:2px;}
+  .side h6{margin:14px 10px 6px;font-size:12px;font-weight:600;color:#8A949E;}
+  .side h6:first-child{margin-top:0;}
+  .nav{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:7px;font-size:14.5px;color:#3A4550;}
+  .nav.on{background:var(--green-soft);color:var(--green);font-weight:600;}
+  .side .foot{margin-top:auto;font-size:12px;color:#8A949E;padding:0 10px;}
+
+  /* Contenu */
+  .content{padding:30px 40px;overflow:hidden;position:relative;}
+  .page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:22px;}
+  .page-head h1{font-family:var(--serif);font-weight:650;font-size:30px;line-height:1.15;margin:0;}
+  .page-head p{margin:4px 0 0;color:var(--muted);font-size:14.5px;}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;}
+  .card-pad{padding:26px 28px;}
+  .two{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start;}
+  .card h3{margin:0 0 4px;font-size:16px;}
+  .card .sub{margin:0 0 18px;color:var(--muted);font-size:13.5px;}
+
+  /* Champs */
+  .field{margin-bottom:16px;}
+  .field label{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13.5px;font-weight:600;margin-bottom:6px;}
+  .field label code{font-weight:400;color:#7C8792;font-size:12px;}
+  .req{color:var(--red);margin-left:2px;}
+  .input{height:42px;border:1px solid #C3CBD3;border-radius:7px;background:var(--surface);padding:0 12px;font-size:14.5px;display:flex;align-items:center;gap:10px;}
+  .input.ph{color:#8A949E;}
+  .input.focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft);}
+  .input.ro{background:var(--field);border-style:dashed;border-color:var(--line);color:var(--muted);}
+  .input.ro::after{content:"";margin-left:auto;width:12px;height:9px;border:1.6px solid #9AA4AE;border-radius:2px;position:relative;top:2px;}
+  .input.select .chev{margin-left:auto;width:16px;height:16px;color:var(--muted);}
+  .input .i{color:#8A949E;}
+  .hint{font-size:12.5px;color:var(--muted);margin-top:5px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;}
+  .seg{display:inline-flex;border:1px solid #C3CBD3;border-radius:7px;overflow:hidden;}
+  .seg span{padding:9px 22px;font-size:14px;font-family:var(--mono);}
+  .seg span.on{background:var(--green);color:#fff;}
+
+  /* Boutons */
+  .btns{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border-radius:7px;font-size:14px;font-weight:600;border:1px solid #C3CBD3;background:var(--surface);color:var(--ink);white-space:nowrap;}
+  .btn.primary{background:var(--green);border-color:var(--green);color:#fff;}
+  .btn.danger{background:var(--red);border-color:var(--red);color:#fff;}
+  .btn.danger-ghost{color:var(--red);border-color:#EBB8B2;}
+  .btn.off{opacity:.45;}
+  .btn.sm{height:30px;padding:0 10px;font-size:13px;font-weight:500;}
+
+  /* Badges */
+  .badge{display:inline-block;font-size:12px;font-weight:600;border-radius:5px;padding:2px 8px;white-space:nowrap;}
+  .badge.ok{background:var(--green-soft);color:var(--green);}
+  .badge.warn{background:var(--amber-soft);color:var(--amber);}
+  .badge.done{background:#ECEFF2;color:#4A5561;}
+  .badge.admin{background:var(--blue-soft);color:var(--blue);}
+  .badge.user{background:#ECEFF2;color:#4A5561;}
+  .badge.enum{font-family:var(--mono);font-weight:500;}
+
+  /* Barre d'outils et tableaux */
+  .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:16px;}
+  .toolbar .input{height:40px;}
+  .toolbar .grow{flex:1;}
+  .tabs{display:inline-flex;gap:2px;background:#ECEFF2;border-radius:8px;padding:3px;}
+  .tabs span{font-size:13.5px;padding:6px 14px;border-radius:6px;color:var(--muted);}
+  .tabs span.on{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08);}
+  table.t{width:100%;border-collapse:collapse;font-size:14px;}
+  table.t th{text-align:left;font-size:12.5px;font-weight:600;color:var(--muted);padding:12px 16px;border-bottom:1px solid var(--line);background:#FAFBFC;}
+  table.t td{padding:13px 16px;border-bottom:1px solid var(--line-soft);vertical-align:middle;}
+  table.t tr:last-child td{border-bottom:0;}
+  table.t td.n{font-family:var(--mono);font-size:12.5px;color:var(--muted);width:56px;}
+  table.t td.act{text-align:right;white-space:nowrap;}
+  table.t td.act .btn + .btn{margin-left:6px;}
+  table.t td b{font-weight:600;}
+  .person{display:flex;align-items:center;gap:10px;}
+  .person .avatar{width:30px;height:30px;font-size:12px;}
+  .count{font-size:13px;color:var(--muted);margin-top:12px;}
+
+  /* Couvertures de livres (couleur = catégorie) */
+  .cover{border-radius:3px 7px 7px 3px;color:#fff;position:relative;padding:18px 16px 16px 22px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:inset 6px 0 0 rgba(0,0,0,.18);}
+  .cover::after{content:"";position:absolute;left:22px;right:16px;bottom:44px;height:1px;background:rgba(255,255,255,.35);}
+  .cover .ct{font-family:var(--serif);font-weight:650;line-height:1.15;}
+  .cover .ca{font-size:12px;opacity:.85;}
+  .c-roman{background:#7A3E48;}
+  .c-sf{background:#2C4A6B;}
+  .c-hist{background:#8A6A2F;}
+  .c-info{background:#2F5D50;}
+
+  .books{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;}
+  .book{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;}
+  .book .cover{height:200px;}
+  .book .ct{font-size:19px;}
+  .book h4{margin:0;font-size:15px;}
+  .book .meta{font-size:13px;color:var(--muted);margin-top:-6px;}
+  .book .row{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:auto;}
+  .book .row .btn{padding:0 8px;}
+
+  /* Fiche livre */
+  .detail{display:grid;grid-template-columns:250px 1fr;gap:36px;align-items:start;}
+  .detail .cover{height:360px;}
+  .detail .cover .ct{font-size:28px;}
+  .detail h2{font-family:var(--serif);font-weight:650;font-size:34px;margin:0;line-height:1.1;}
+  .detail .by{font-size:17px;color:var(--muted);margin:6px 0 22px;}
+  dl.kv{display:grid;grid-template-columns:150px 1fr;gap:12px 16px;margin:0;font-size:14.5px;}
+  dl.kv dt{color:var(--muted);}
+  dl.kv dd{margin:0;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  dl.kv dd code{color:#8A949E;font-size:12px;}
+
+  .callout{border-left:3px solid var(--amber);background:var(--amber-soft);border-radius:0 8px 8px 0;padding:12px 14px;font-size:14px;margin-top:22px;}
+  .callout.info{border-color:var(--blue);background:var(--blue-soft);}
+  .callout b{font-weight:600;}
+  .tips{margin:0;padding:0;list-style:none;font-size:13.5px;color:var(--muted);display:grid;gap:12px;}
+  .tips li{padding-left:16px;position:relative;}
+  .tips li::before{content:"";position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:50%;background:var(--green);}
+
+  /* Liste d'emprunts sélectionnables */
+  .pick{display:grid;gap:10px;}
+  .pick .opt{display:grid;grid-template-columns:20px 54px 1fr auto;gap:14px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:12px 14px;background:var(--surface);}
+  .pick .opt.on{border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft);}
+  .radio{width:18px;height:18px;border-radius:50%;border:2px solid #AEB7C0;}
+  .opt.on .radio{border:5px solid var(--green);}
+  .pick .cover{height:72px;padding:0;box-shadow:inset 4px 0 0 rgba(0,0,0,.18);}
+  .pick .cover::after{display:none;}
+  .pick h4{margin:0;font-size:15px;}
+  .pick small{color:var(--muted);font-size:13px;}
+  .transition{display:inline-flex;align-items:center;gap:8px;}
+  .transition i{font-style:normal;color:var(--muted);font-size:13px;}
+
+  /* Boîte de dialogue */
+  .overlay{position:absolute;inset:0;background:rgba(24,33,43,.45);display:grid;place-items:center;z-index:2;}
+  .dialog{width:460px;background:var(--surface);border-radius:12px;padding:26px;box-shadow:0 20px 50px rgba(0,0,0,.25);}
+  .dialog .ico{width:40px;height:40px;border-radius:50%;background:var(--red-soft);color:var(--red);display:grid;place-items:center;margin-bottom:14px;}
+  .dialog h3{margin:0 0 8px;font-size:18px;}
+  .dialog p{margin:0;color:var(--muted);font-size:14.5px;}
+  .dialog .btns{justify-content:flex-end;}
+
+  /* Écran de connexion */
+  .screen.bare{display:grid;grid-template-columns:560px 1fr;grid-template-rows:1fr;}
+  .login-art{background:var(--green);color:#fff;padding:48px 52px;display:flex;flex-direction:column;position:relative;overflow:hidden;}
+  .login-art .brand strong{color:#fff;}
+  .login-art .mark{background:#fff;}
+  .login-art .mark::before,.login-art .mark::after{background:var(--green);}
+  .login-art h2{font-family:var(--serif);font-weight:650;font-size:40px;line-height:1.12;margin:auto 0 14px;max-width:12ch;}
+  .login-art p{margin:0 0 150px;opacity:.82;font-size:16px;max-width:36ch;}
+  .shelf{position:absolute;left:52px;right:52px;bottom:0;height:130px;display:flex;align-items:flex-end;gap:6px;border-bottom:6px solid rgba(255,255,255,.35);}
+  .shelf span{flex:1;border-radius:2px 2px 0 0;background:rgba(255,255,255,.16);}
+  .login-form{display:grid;place-items:center;}
+  .login-form .box{width:380px;}
+  .login-form h1{font-family:var(--serif);font-weight:650;font-size:32px;margin:0 0 6px;}
+  .login-form .lead{color:var(--muted);margin:0 0 28px;font-size:15px;}
+  .btn.block{width:100%;height:44px;font-size:15px;}
+
+  /* Hotspots : élément qui déclenche une navigation */
+  .hot{box-shadow:0 0 0 3px #fff,0 0 0 5px var(--flow);border-radius:7px;}
+
+  /* ═════════ Annotations sous l'écran ═════════ */
+  .notes{
+    margin-top:18px;
+    background:var(--note);
+    border:1px solid #EAD98F;
+    border-radius:8px;
+    padding:18px 22px;
+    display:grid;
+    grid-template-columns:1.1fr 1.3fr 1.3fr 2fr;
+    gap:24px;
+    font-size:14.5px;
+  }
+  .notes h5{margin:0 0 6px;font-size:12.5px;font-weight:600;color:#7A6A1E;}
+  .notes p{margin:0;}
+  .ep{display:block;font-family:var(--mono);font-size:13px;}
+  .verb{display:inline-block;min-width:58px;font-weight:500;}
+  .verb.get{color:var(--blue);}
+  .verb.post{color:var(--green);}
+  .verb.put{color:var(--amber);}
+  .verb.del{color:var(--red);}
+  .msg{display:grid;grid-template-columns:44px 1fr;gap:8px;margin-bottom:5px;}
+  .msg .c{font-family:var(--mono);font-size:12px;border-radius:4px;text-align:center;padding:1px 0;height:max-content;margin-top:2px;}
+  .c.ok{background:#CFE5DC;color:#174A3F;}
+  .c.err{background:#F6CEC8;color:#7A1A12;}
+  .c.info{background:#CFDCF0;color:#1D3F70;}
+
+  /* Libellés des flèches */
+  .link-label{font:600 14px var(--sans);fill:var(--flow);}
+  .link-bg{fill:#fff;stroke:var(--flow);stroke-width:1.5;}
+
+  /* ═════════ Référentiel UML ═════════ */
+  .model{display:grid;grid-template-columns:repeat(3,410px);gap:24px;}
+  .klass{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .klass h3{margin:0;padding:12px 16px;font-family:var(--serif);font-size:20px;font-weight:650;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline;}
+  .klass h3 small{font-family:var(--sans);font-size:13px;font-weight:400;color:var(--muted);}
+  .klass table{width:100%;border-collapse:collapse;font-size:14px;}
+  .klass td{padding:9px 16px;border-top:1px solid var(--line-soft);vertical-align:top;}
+  .klass tr:first-child td{border-top:0;}
+  .klass td:first-child{white-space:nowrap;width:150px;}
+  .klass .type{display:block;color:var(--muted);font-family:var(--mono);font-size:12px;}
+  .klass .ihm{color:var(--muted);}
+  .klass .ihm b{color:var(--green);font-weight:600;}
+  .klass .assoc td{background:#FAFBFC;}
+  .enums{display:flex;flex-wrap:wrap;gap:24px;margin-top:20px;font-size:15px;color:var(--muted);align-items:center;}
+  .enums span{display:inline-flex;gap:8px;align-items:center;}
+
+  /* Contrôle de zoom (affichage seulement) */
+  .zoom{position:fixed;right:20px;bottom:20px;z-index:10;display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:4px;box-shadow:0 4px 14px rgba(0,0,0,.12);font-size:13px;}
+  .zoom button{border:0;background:none;padding:6px 10px;border-radius:5px;font:inherit;cursor:pointer;color:var(--muted);}
+  .zoom button[aria-pressed="true"]{background:var(--green);color:#fff;}
+  .zoom button:focus-visible{outline:2px solid var(--flow);outline-offset:1px;}
+  @media print{.zoom{display:none;}}
+</style>
+</head>
+<body>
+
+<!-- Icônes -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M5 4.5h10a3 3 0 0 1 3 3V20H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h10"/></symbol>
+  <symbol id="i-return" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
+  <symbol id="i-books" viewBox="0 0 24 24"><path d="M4 4h4v16H4zM10 4h4v16h-4z"/><path d="m16 5 3.5-.8 2.6 15.6-3.5.8z"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.3A6.5 6.5 0 0 1 21.5 20"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 4 3 8l4 4"/><path d="M3 8h14"/><path d="m17 20 4-4-4-4"/><path d="M21 16H7"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="m10 16-4-4 4-4"/><path d="M6 12h10"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+</svg>
+
+<div class="canvas" id="canvas">
+
+<header class="doc-head">
+  <h1>Médiathèque numérique<br>Maquettes de l'interface</h1>
+  <p>Quinze écrans regroupés en quatre parcours. Les flèches partent de l'élément cliqué et montrent l'écran suivant. Sous chaque écran, une note relie l'interface au cas d'utilisation, à l'endpoint de l'API, aux attributs du diagramme de classes et aux messages renvoyés.</p>
+  <div class="legend">
+    <span><span class="sw-frame"></span>Écran 1280 × 800</span>
+    <span><span class="sw-hot"></span>Élément qui déclenche la navigation</span>
+    <span><span class="sw-arrow"></span>Navigation vers l'écran suivant</span>
+    <span><span class="sw-note"></span>Note de conception</span>
+    <span><span class="req">*</span>Champ obligatoire</span>
+  </div>
+</header>
+
+<!-- ═══════════════════════════ P0 RÉFÉRENTIEL UML ═══════════════════════════ -->
+<section class="planche" id="p0">
+  <div class="planche-head">
+    <h2>Attributs du diagramme de classes</h2>
+    <p>Chaque attribut des trois classes de <code>analyse/uml-classes.mmd</code> apparaît dans l'interface. La colonne de droite indique comment il est saisi ou affiché, et dans quels écrans.</p>
+  </div>
+  <div class="model">
+    <article class="klass">
+      <h3>Utilisateur <small>entité <code>User</code></small></h3>
+      <table>
+        <tr><td><code>id</code><span class="type">Long</span></td><td class="ihm">Généré, lecture seule. <b>E9 E11</b></td></tr>
+        <tr><td><code>nom</code><span class="type">String</span></td><td class="ihm">Saisi, modifiable. <b>E9 E10 E11 E13</b></td></tr>
+        <tr><td><code>email</code><span class="type">String, unique</span></td><td class="ihm">Identifiant de connexion. <b>E1 E9 E10 E11</b></td></tr>
+        <tr><td><code>password</code><span class="type">String</span></td><td class="ihm">Saisi masqué, chiffré BCrypt, jamais affiché. <b>E1 E10 E11</b></td></tr>
+        <tr><td><code>role</code><span class="type">RoleUser</span></td><td class="ihm">Choisi à la création, puis lecture seule. <b>E9 E10 E11</b></td></tr>
+        <tr class="assoc"><td>effectue<span class="type">1 → 0..* Emprunt</span></td><td class="ihm">Emprunteur. <b>E13 E14 E15</b></td></tr>
+      </table>
+    </article>
+    <article class="klass">
+      <h3>Livre <small>entité <code>Livre</code></small></h3>
+      <table>
+        <tr><td><code>id</code><span class="type">Long</span></td><td class="ihm">Généré, lecture seule. <b>E3 E4 E5 E7</b></td></tr>
+        <tr><td><code>titre</code><span class="type">String, unique</span></td><td class="ihm">Saisi, obligatoire. <b>E2 à E8</b></td></tr>
+        <tr><td><code>auteur</code><span class="type">String</span></td><td class="ihm">Saisi, obligatoire. <b>E2 à E7</b></td></tr>
+        <tr><td><code>categorie</code><span class="type">String</span></td><td class="ihm">Liste déroulante, filtre. <b>E2 à E7</b></td></tr>
+        <tr><td><code>disponible</code><span class="type">boolean</span></td><td class="ihm">Jamais saisi : vrai à la création, faux à l'emprunt, vrai au retour. <b>E2 à E7</b></td></tr>
+        <tr class="assoc"><td>concerné par<span class="type">1 → 0..* Emprunt</span></td><td class="ihm">Emprunt en cours sur la fiche. <b>E5 E8</b></td></tr>
+      </table>
+    </article>
+    <article class="klass">
+      <h3>Emprunt <small>entité <code>Emprunt</code></small></h3>
+      <table>
+        <tr><td><code>id</code><span class="type">Long</span></td><td class="ihm">Généré, sert au retour. <b>E14 E15</b></td></tr>
+        <tr><td><code>dateEmprunt</code><span class="type">LocalDate</span></td><td class="ihm">Date du jour, fixée par l'API. <b>E13 E14 E15</b></td></tr>
+        <tr><td><code>dateRetourPrevue</code><span class="type">LocalDate</span></td><td class="ihm">Saisie, obligatoire. <b>E13 E14 E15</b></td></tr>
+        <tr><td><code>statut</code><span class="type">EmpruntStatus</span></td><td class="ihm"><code>EN_COURS</code> puis <code>TERMINE</code> au retour. <b>E13 E14 E15</b></td></tr>
+        <tr class="assoc"><td>emprunteur<span class="type">→ 1 Utilisateur</span></td><td class="ihm">Utilisateur connecté (jeton JWT). <b>E13</b></td></tr>
+        <tr class="assoc"><td>livre<span class="type">→ 1 Livre</span></td><td class="ihm">Choisi parmi les disponibles. <b>E13</b></td></tr>
+      </table>
+    </article>
+  </div>
+  <div class="enums">
+    <span><code>RoleUser</code> <span class="badge admin enum">ADMIN</span> <span class="badge user enum">USER</span></span>
+    <span><code>EmpruntStatus</code> <span class="badge warn enum">EN_COURS</span> <span class="badge done enum">TERMINE</span></span>
+    <span><code>disponible</code> <span class="badge ok">Disponible</span> = <code>true</code>, <span class="badge warn">Emprunté</span> = <code>false</code></span>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ P1 PARCOURS LECTEUR : EMPRUNTER ═══════════════════════════ -->
+<section class="planche" id="p1" data-links="#e1 .hs-login>#e2|Connexion réussie (USER);#e2 .hs-book>#e3|Clic sur un livre;#e3 .hs-borrow>#e13|Emprunter ce livre">
+  <div class="planche-head">
+    <h2>Parcours 1 : se connecter et emprunter un livre</h2>
+    <p>Le lecteur se connecte, parcourt le catalogue, ouvre la fiche d'un livre disponible et confirme l'emprunt.</p>
+    <div class="ucs"><span><b>UC0</b> Se connecter</span><span><b>UC1</b> Consulter le catalogue</span><span><b>UCD</b> Consulter le détail «extend» UC1</span><span><b>UC2</b> Emprunter un livre</span></div>
+  </div>
+  <div class="board" style="grid-template-columns:repeat(4,1280px)">
+
+    <!-- E1 -->
+    <div class="frame" id="e1">
+      <div class="frame-label"><span class="fid">E1</span><b>Se connecter</b> Public</div>
+      <div class="screen bare">
+        <div class="login-art">
+          <div class="brand"><span class="mark"></span><strong>Médiathèque</strong></div>
+          <h2>Le catalogue, ouvert à tout moment.</h2>
+          <p>Consultez les livres disponibles, empruntez-les et enregistrez vos retours en ligne.</p>
+          <div class="shelf" aria-hidden="true">
+            <span style="height:82%"></span><span style="height:64%"></span><span style="height:92%"></span><span style="height:70%"></span><span style="height:86%"></span><span style="height:58%"></span><span style="height:95%"></span><span style="height:74%"></span><span style="height:66%"></span><span style="height:88%"></span><span style="height:60%"></span><span style="height:80%"></span>
+          </div>
+        </div>
+        <div class="login-form">
+          <div class="box">
+            <h1>Connexion</h1>
+            <p class="lead">Utilisez l'email de votre compte médiathèque.</p>
+            <div class="field">
+              <label><span>Email<span class="req">*</span></span><code>email</code></label>
+              <div class="input focus">rakoto.j@mail.mg</div>
+            </div>
+            <div class="field">
+              <label><span>Mot de passe<span class="req">*</span></span><code>password</code></label>
+              <div class="input">••••••••••</div>
+            </div>
+            <div class="btn primary block hs-login hot" style="margin-top:10px">Se connecter</div>
+          </div>
+        </div>
+      </div>
+      <div class="notes">
+        <div><h5>Cas d'utilisation</h5><p>UC0 Se connecter, inclus dans tous les cas protégés.</p></div>
+        <div><h5>API</h5><span class="ep"><span class="verb post">POST</span>/api/auth/login</span></div>
+        <div><h5>Attributs UML</h5><p>Utilisateur : <code>email</code>, <code>password</code>, <code>role</code> (lu dans la réponse)</p></div>
+        <div><h5>Messages</h5>
+          <div class="msg"><span class="c info">200</span><span>USER : ouverture du catalogue (E2). ADMIN : liste des livres (E4).</span></div>
+          <div class="msg"><span class="c err">401</span><span>Email ou mot de passe incorrect.</span></div>
+          <div class="msg"><span class="c err">404</span><span>Aucun compte n'est associé à cet email.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- E2 -->
+    <div class="frame" id="e2">
+      <div class="frame-label"><span class="fid">E2</span><b>Catalogue des livres</b> Utilisateur</div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="brand"><span class="mark"></span><strong>Médiathèque</strong></div>
+          <div class="crumbs"><b>Catalogue</b></div>
+          <div class="who"><span class="avatar">RJ</span><span class="who-name">Rakoto Jean<small>USER</small></span><span class="logout"><svg class="i"><use href="#i-logout"/></svg>Se déconnecter</span></div>
+        </div>
+        <nav class="side">
+          <h6>Espace lecteur</h6>
+          <span class="nav on"><svg class="i"><use href="#i-grid"/></svg>Catalogue</span>
+          <span class="nav"><svg class="i"><use href="#i-book"/></svg>Emprunter un livre</span>
+          <span class="nav"><svg class="i"><use href="#i-return"/></svg>Retourner un livre</span>
+        </nav>
+        <main class="content">
+          <div class="page-head">
+            <div><h1>Catalogue</h1><p>5 livres, dont 3 disponibles</p></div>
+          </div>
+          <div class="toolbar">
+            <div class="input select" style="width:150px">Par titre</div>
+            <div class="input ph grow"><svg class="i"><use href="#i-search"/></svg>Rechercher un titre</div>
+            <div class="tabs"><span class="on">Toutes</span><span>Roman</span><span>Science-fiction</span><span>Histoire</span><span>Informatique</span></div>
+          </div>
+          <div class="books">
+            <div class="book"><div class="cover c-roman"><span class="ct">Le Petit Prince</span><span class="ca">Roman</span></div><h4>Le Petit Prince</h4><div class="meta">Antoine de Saint-Exupéry</div><div class="row"><span class="badge ok">Disponible</span><span class="btn sm">Emprunter</span></div></div>
+            <div class="book"><div class="cover c-sf"><span class="ct">1984</span><span class="ca">Science-fiction</span></div><h4>1984</h4><div class="meta">George Orwell</div><div class="row"><span class="badge warn">Emprunté</span><span class="btn sm off">Emprunter</span></div></div>
+            <div class="book"><div class="cover c-roman"><span class="ct">L'Étranger</span><span class="ca">Roman</span></div><h4>L'Étranger</h4><div class="meta">Albert Camus</div><div class="row"><span class="badge warn">Emprunté</span><span class="btn sm off">Emprunter</span></div></div>
+            <div class="book hs-book hot"><div class="cover c-hist"><span class="ct">Sapiens</span><span class="ca">Histoire</span></div><h4>Sapiens</h4><div class="meta">Yuval Noah Harari</div><div class="row"><span class="badge ok">Disponible</span><span class="btn sm">Emprunter</span></div></div>
+            <div class="book"><div class="cover c-info"><span class="ct">Clean Code</span><span class="ca">Informatique</span></div><h4>Clean Code</h4><div class="meta">Robert C. Martin</div><div class="row"><span class="badge ok">Disponible</span><span class="btn sm">Emprunter</span></div></div>
+          </div>
+        </main>
+      </div>
+      <div class="notes">
+        <div><h5>Cas d'utilisation</h5><p>UC1 Consulter le catalogue. Le bouton Emprunter est désactivé sur les livres empruntés (RG-01).</p></div>
+        <div><h5>API</h5><span class="ep"><span class="verb get">GET</span>/api/livres</span><span class="ep"><span class="verb get">GET</span>/api/livres/titre/{titre}</span><span class="ep"><span class="verb get">GET</span>/api/livres/auteur/{auteur}</span><span class="ep"><span class="verb get">GET</span>/api/livres/categorie/{categorie}</span></div>
+        <div><h5>Attributs UML</h5><p>Livre : <code>titre</code>, <code>auteur</code>, <code>categorie</code>, <code>disponible</code></p></div>
+        <div><h5>Messages</h5>
+          <div class="msg"><span class="c info">200</span><span>Liste vide : « Aucun livre ne correspond à « Dune ». Essayez un autre titre, un auteur ou une catégorie. »</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- E3 -->
+    <div class="frame" id="e3">
+      <div class="frame-label"><span class="fid">E3</span><b>Fiche d'un livre</b> Utilisateur</div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="brand"><span class="mark"></span><strong>Médiathèque</strong></div>
+          <div class="crumbs">Catalogue <i>/</i> <b>Sapiens</b></div>
+          <div class="who"><span class="avatar">RJ</span><span class="who-name">Rakoto Jean<small>USER</small></span><span class="logout"><svg class="i"><use href="#i-logout"/></svg>Se déconnecter</span></div>
+        </div>
+        <nav class="side">
+          <h6>Espace lecteur</h6>
+          <span class="nav on"><svg class="i"><use href="#i-grid"/></svg>Catalogue</span>
+          <span class="nav"><svg class="i"><use href="#i-book"/></svg>Emprunter un livre</span>
+          <span class="nav"><svg class="i"><use href="#i-return"/></svg>Retourner un livre</span>
+        </nav>
+        <main class="content">
+          <div class="card card-pad" style="margin-top:6px">
+            <div class="detail">
+              <div class="cover c-hist"><span class="ct">Sapiens</span><span class="ca">Histoire</span></div>
+              <div>
+                <h2>Sapiens</h2>
+                <div class="by">Yuval Noah Harari</div>
+                <dl class="kv">
+                  <dt>N°</dt><dd>4 <code>id</code></dd>
+                  <dt>Titre</dt><dd>Sapiens <code>titre</code></dd>
+                  <dt>Auteur</dt><dd>Yuval Noah Harari <code>auteur</code></dd>
+                  <dt>Catégorie</dt><dd>Histoire <code>categorie</code></dd>
+                  <dt>Disponibilité</dt><dd><span class="badge ok">Disponible</span> <code>disponible</code></dd>
+                </dl>
+                <div class="btns" style="margin-top:30px">
+                  <span class="btn primary hs-borrow hot"><svg class="i"><use href="#i-book"/></svg>Emprunter ce livre</span>
+                  <span class="btn">Retour au catalogue</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+      <div class="notes">
+        <div><h5>Cas d'utilisation</h5><p>UCD Consulter le détail d'un livre, extension de UC1.</p></div>
+        <div><h5>API</h5><span class="ep"><span class="verb get">GET</span>/api/livres/{id}</span></div>
+        <div><h5>Attributs UML</h5><p>Livre : tous les attributs, en lecture seule</p></div>
+        <div><h5>Messages</h5>
+          <div class="msg"><span class="c info">200</span><span>Livre emprunté : « Ce livre est déjà emprunté. Il redeviendra disponible dès son retour. » Bouton désactivé.</span></div>
+          <div class="msg"><span class="c err">404</span><span>Ce livre n'existe plus dans le catalogue.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- E13 -->
+    <div class="frame" id="e13">
+      <div class="frame-label"><span class="fid">E13</span><b>Emprunter un livre</b> Utilisateur</div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="brand"><span class="mark"></span><strong>Médiathèque</strong></div>
+          <div class="crumbs">Catalogue <i>/</i> Sapiens <i>/</i> <b>Emprunter</b></div>
+          <div class="who"><span class="avatar">RJ</span><span class="who-name">Rakoto Jean<small>USER</small></span><span class="logout"><svg class="i"><use href="#i-logout"/></svg>Se déconnecter</span></div>
+        </div>
+        <nav class="side">
+          <h6>Espace lecteur</h6>
+          <span class="nav"><svg class="i"><use href="#i-grid"/></svg>Catalogue</span>
+          <span class="nav on"><svg class="i"><use href="#i-book"/></svg>Emprunter un livre</span>
+          <span class="nav"><svg class="i"><use href="#i-return"/></svg>Retourner un livre</span>
+        </nav>
+        <main class="content">
+          <div class="page-head"><div><h1>Emprunter un livre</h1><p>Le livre sera réservé à votre nom jusqu'à son retour.</p></div></div>
+          <div class="two">
+            <div class="card card-pad">
+              <div class="field">
+                <label>Emprunteur <code>emprunteur</code></label>
+                <div class="input ro">Rakoto Jean (vous)</div>
+              </div>
+              <div class="field">
+                <label><span>Livre<span class="req">*</span></span><code>livre</code></label>
+                <div class="input select focus">Sapiens, Yuval Noah Harari</div>
+                <div class="hint">Seuls les livres disponibles sont proposés.</div>
+              </div>
+              <div class="grid2">
+                <div class="field">
+                  <label>Emprunté le <code>dateEmprunt</code></label>
+                  <div class="input ro">30/10/2026</div>
+                </div>
+                <div class="field">
+                  <label><span>Retour prévu<span class="req">*</span></span><code>dateRetourPrevue</code></label>
+                  <div class="input"><svg class="i"><use href="#i-cal"/></svg>13/11/2026</div>
+                </div>
+              </div>
+              <div class="field">
+                <label>Statut <code>statut</code></label>
+                <div class="input ro"><span class="badge warn enum">EN_COURS</span> attribué à la confirmation</div>
+              </div>
+              <div class="btns">
+                <span class="btn primary">Confirmer l'emprunt</span>
+                <span class="btn">Annuler</span>
+              </div>
+            </div>
+            <div class="card card-pad">
+              <h3>Récapitulatif</h3>
+              <p class="sub">Ce que vous empruntez</p>
+              <div class="cover c-hist" style="height:170px"><span class="ct" style="font-size:20px">Sapiens</span><span class="ca">Histoire</span></div>
+              <div class="callout info"><b>À rendre au plus tard le 13/11/2026.</b> Pendant l'emprunt, le livre n'est plus proposé aux autres lecteurs.</div>
+            </div>
+          </div>
+        </main>
+      </div>
+      <div class="notes">
+        <div><h5>Cas d'utilisation</h5><p>UC2 Emprunter un livre. Règles RG-01, RG-02, RG-05. L'emprunteur est lu dans le jeton, jamais choisi.</p></div>
+        <div><h5>API</h5><span class="ep"><span class="verb post">POST</span>/api/emprunts</span><code>{ livreId, dateRetourPrevue }</code></div>
+        <div><h5>Attributs UML</h5><p>Emprunt : <code>dateEmprunt</code>, <code>dateRetourPrevue</code>, <code>statut</code>, emprunteur, livre. Livre.<code>disponible</code> passe à <code>false</code>.</p></div>
+        <div><h5>Messages</h5>
+          <div class="msg"><span class="c ok">201</span><span>Emprunt n° 4 enregistré. Rapportez « Sapiens » au plus tard le 13/11/2026.</span></div>
+          <div class="msg"><span class="c err">409</span><span>« 1984 » est déjà emprunté. Choisissez un livre disponible.</span></div>
+          <div class="msg"><span class="c err">404</span><span>Ce livre n'existe plus dans le catalogue.</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════ P2 RETOURS ET SUIVI ═══════════════════════════ -->
+<section class="planche" id="p2" data-links="#e15 .hs-ret>#e14|Retour sur un emprunt en cours">
+  <div class="planche-head">
+    <h2>Parcours 2 : retourner un livre et suivre les emprunts</h2>
+    <p>L'administrateur suit tous les emprunts et ouvre l'écran de retour depuis une ligne en cours. Le lecteur y accède directement par son menu « Retourner un livre ».</p>
+    <div class="ucs"><span><b>UC7</b> Consulter les emprunts</span><span><b>UC3</b> Retourner un livre</span></div>
+  </div>
+  <div class="board" style="grid-template-columns:repeat(2,1280px)">
+
+    <!-- E15 -->
+    <div class="frame" id="e15">
+      <div class="frame-label"><span class="fid">E15</span><b>Suivi des emprunts</b> Administrateur</div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="brand"><span class="mark"></span><strong>Médiathèque</strong></div>
+          <div class="crumbs">Administration <i>/</i> <b>Emprunts</b></div>
+          <div class="who"><span class="avatar admin">AL</span><span class="who-name">Andria Lova<small>ADMIN</small></span><span class="logout"><svg class="i"><use href="#i-logout"/></svg>Se déconnecter</span></div>
+        </div>
+        <nav class="side">
+          <h6>Administration</h6>
+          <span class="nav"><svg class="i"><use href="#i-books"/></svg>Livres</span>
+          <span class="nav"><svg class="i"><use href="#i-users"/></svg>Utilisateurs</span>
+          <span class="nav on"><svg class="i"><use href="#i-swap"/></svg>Emprunts</span>
+          <h6>Espace lecteur</h6>
+          <span class="nav"><svg class="i"><use href="#i-grid"/></svg>Catalogue</span>
+          <span class="nav"><svg class="i"><use href="#i-return"/></svg>Retourner un livre</span>
+        </nav>
+        <main class="content">
+          <div class="page-head">
+            <div><h1>Emprunts</h1><p>3 emprunts, dont 2 en cours</p></div>
+            <div class="tabs"><span class="on">Tous</span><span>EN_COURS</span></div>
+          </div>
+          <div class="card">
+            <table class="t">
+              <thead><tr><th>N°</th><th>Emprunteur</th><th>Livre</th><th>Emprunté le</th><th>Retour prévu</th><th>Statut</th><th></th></tr></thead>
+              <tbody>
+                <tr><td class="n">3</td><td><div class="person"><span class="avatar">RJ</span>Rakoto Jean</div></td><td><b>L'Étranger</b></td><td>22/10/2026</td><td>05/11/2026</td><td><span class="badge warn enum">EN_COURS</span></td><td class="act"><span class="btn sm hs-ret hot"><svg class="i"><use href="#i-return"/></svg>Retour</span></td></tr>
+                <tr><td class="n">2</td><td><div class="person"><span class="avatar">RA</span>Rasoa Anna</div></td><td><b>1984</b></td><td>16/10/2026</td><td>30/10/2026</td><td><span class="badge warn enum">EN_COURS</span></td><td class="act"><span class="btn sm"><svg class="i"><use href="#i-return"/></svg>Retour</span></td></tr>
+                <tr><td class="n">1</td><td><div class="person"><span class="avatar">RJ</span>Rakoto Jean</div></td><td><b>Le Petit Prince</b></td><td>20/09/2026</td><td>04/10/2026</td><td><span class="badge done enum">TERMINE</span></td><td class="act"></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+      <div class="notes">
+        <div><h5>Cas d'utilisation</h5><p>UC7 Consulter les emprunts. Réservé au rôle ADMIN. Accès à UC3 depuis une ligne en cours.</p></div>
+        <div><h5>API</h5><span class="ep"><span class="verb get">GET</span>/api/emprunts</span><span class="ep"><span class="verb get">GET</span>/api/emprunts/en-cours</span></div>
+        <div><h5>Attributs UML</h5><p>Emprunt : tous les attributs ; associations vers Utilisateur (<code>nom</code>) et Livre (<code>titre</code>)</p></div>
+        <div><h5>Messages</h5>
+          <div class="msg"><span class="c info">200</span><span>Filtre EN_COURS vide : « Aucun emprunt en cours. Tous les livres sont rentrés. »</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- E14 -->
+    <div class="frame" id="e14">
+      <div class="frame-label"><span class="fid">E14</span><b>Retourner un livre</b> Utilisateur et administrateur</div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="brand"><span class="mark"></span><strong>Médiathèque</strong></div>
+          <div class="crumbs"><b>Retourner un livre</b></div>
+          <div class="who"><span class="avatar">RJ</span><span class="who-name">Rakoto Jean<small>USER</small></span><span class="logout"><svg class="i"><use href="#i-logout"/></svg>Se déconnecter</span></div>
+        </div>
+        <nav class="side">
+          <h6>Espace lecteur</h6>
+          <span class="nav"><svg class="i"><use href="#i-grid"/></svg>Catalogue</span>
+          <span class="nav"><svg class="i"><use href="#i-book"/></svg>Emprunter un livre</span>
+          <span class="nav on"><svg class="i"><use href="#i-return"/></svg>Retourner un livre</span>
+        </nav>
+        <main class="content">
+          <div class="page-head"><div><h1>Retourner un livre</h1><p>Choisissez l'emprunt à clôturer.</p></div></div>
+          <div class="two">
+            <div>
+              <div class="field" style="margin-bottom:10px"><label><span>Emprunt en cours<span class="req">*</span></span><code>id</code></label></div>
+              <div class="pick">
+                <div class="opt on"><span class="radio"></span><div class="cover c-roman"></div><div><h4>L'Étranger</h4><small>N° 3, Rakoto Jean, à rendre le 05/11/2026</small></div><span class="badge warn enum">EN_COURS</span></div>
+                <div class="opt"><span class="radio"></span><div class="cover c-sf"></div><div><h4>1984</h4><small>N° 2, Rasoa Anna, à rendre le 30/10/2026</small></div><span class="badge warn enum">EN_COURS</span></div>
+              </div>
+            </div>
+            <div class="card card-pad">
+              <h3>Emprunt n° 3</h3>
+              <p class="sub">Vérifiez avant de confirmer</p>
+              <dl class="kv" style="grid-template-columns:110px 1fr;font-size:14px">
+                <dt>Emprunteur</dt><dd>Rakoto Jean</dd>
+                <dt>Livre</dt><dd>L'Étranger</dd>
+                <dt>Emprunté le</dt><dd>22/10/2026</dd>
+                <dt>Retour prévu</dt><dd>05/11/2026</dd>
+                <dt>Statut</dt><dd><span class="transition"><span class="badge warn enum">EN_COURS</span><i>devient</i><span class="badge done enum">TERMINE</span></span></dd>
+              </dl>
+              <div class="btns">
+                <span class="btn primary">Enregistrer le retour</span>
+                <span class="btn">Annuler</span>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+      <div class="notes">
+        <div><h5>Cas d'utilisation</h5><p>UC3 Retourner un livre. Règle RG-04 : le livre redevient disponible.</p></div>
+        <div><h5>API</h5><span class="ep"><span class="verb get">GET</span>/api/emprunts/en-cours</span><span class="ep"><span class="verb put">PUT</span>/api/emprunts/{id}/retour</span></div>
+        <div><h5>Attributs UML</h5><p>Emprunt : <code>id</code>, emprunteur, livre, <code>dateEmprunt</code>, <code>dateRetourPrevue</code>, <code>statut</code>. Livre.<code>disponible</code> repasse à <code>true</code>.</p></div>
+        <div><h5>Messages</h5>
+          <div class="msg"><span class="c ok">200</span><span>Retour enregistré. « L'Étranger » est de nouveau disponible.</span></div>
+          <div class="msg"><span class="c err">404</span><span>Cet emprunt est déjà terminé ou n'existe pas.</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════ P3 ADMIN LIVRES ═══════════════════════════ -->
+<section class="planche" id="p3" data-links="#e4 .hs-add>#e6|Ajouter un livre;#e4 .hs-view>#e5|Voir;#e5 .hs-edit>#e7|Modifier;#e4 .hs-del>#e8|Supprimer">
+  <div class="planche-head">
+    <h2>Parcours 3 : gérer le catalogue</h2>
+    <p>Depuis la liste des livres, l'administrateur ajoute, consulte, modifie ou supprime un livre. Ces actions sont refusées par l'API aux autres rôles.</p>
+    <div class="ucs"><span><b>UC4</b> Ajouter un livre</span><span><b>UCD</b> Consulter le détail</span><span><b>UC5</b> Modifier un livre</span><span><b>UC6</b> Supprimer un livre</span></div>
+  </div>
+  <div class="board" style="grid-template-columns:repeat(3,1280px)">
+
+    <!-- E4 -->
+    <div class="frame" id="e4" style="grid-column:1;grid-row:1">
+      <div class="frame-label"><span class="fid">E4</span><b>Liste des livres</b> Administrateur</div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="brand"><span class="mark"></span><strong>Médiathèque</strong></div>
+          <div class="crumbs">Administration <i>/</i> <b>Livres</b></div>
+          <div class="who"><span class="avatar admin">AL</span><span class="who-name">Andria Lova<small>ADMIN</small></span><span class="logout"><svg class="i"><use href="#i-logout"/></svg>Se déconnecter</span></div>
+        </div>
+        <nav class="side">
+          <h6>Administration</h6>
+          <span class="nav on"><svg class="i"><use href="#i-books"/></svg>Livres</span>
+          <span class="nav"><svg class="i"><use href="#i-users"/></svg>Utilisateurs</span>
+          <span class="nav"><svg class="i"><use href="#i-swap"/></svg>Emprunts</span>
+          <h6>Espace lecteur</h6>
+          <span class="nav"><svg class="i"><use href="#i-grid"/></svg>Catalogue</span>
+          <span class="nav"><svg class="i"><use href="#i-return"/></svg>Retourner un livre</span>
+        </nav>
+        <main class="content">
+          <div class="page-head">
+            <div><h1>Livres</h1><p>5 livres : 3 disponibles, 2 empruntés</p></div>
+            <span class="btn primary hs-add hot"><svg class="i"><use href="#i-plus"/></svg>Ajouter un livre</span>
+          </div>
+          <div class="toolbar">
+            <div class="input select" style="width:150px">Par auteur</div>
+            <div class="input ph grow"><svg class="i"><use href="#i-search"/></svg>Rechercher un auteur</div>
+          </div>
+          <div class="card">
+            <table class="t">
+              <thead><tr><th>N°</th><th>Titre</th><th>Auteur</th><th>Catégorie</th><th>Disponibilité</th><th></th></tr></thead>
+              <tbody>
+                <tr><td class="n">1</td><td><b>Le Petit Prince</b></td><td>Antoine de Saint-Exupéry</td><td>Roman</td><td><span class="badge ok">Disponible</span></td><td class="act"><span class="btn sm">Voir</span><span class="btn sm">Modifier</span><span class="btn sm danger-ghost hs-del hot">Supprimer</span></td></tr>
+                <tr><td class="n">2</td><td><b>1984</b></td><td>George Orwell</td><td>Science-fiction</td><td><span class="badge warn">Emprunté</span></td><td class="act"><span class="btn sm hs-view hot">Voir</span><span class="btn sm">Modifier</span><span class="btn sm danger-ghost">Supprimer</span></td></tr>
+                <tr><td class="n">3</td><td><b>L'Étranger</b></td><td>Albert Camus</td><td>Roman</td><td><span class="badge warn">Emprunté</span></td><td class="act"><span class="btn sm">Voir</span><span class="btn sm">Modifier</span><span class="btn sm danger-ghost">Supprimer</span></td></tr>
+                <tr><td class="n">4</td><td><b>Sapiens</b></td><td>Yuval Noah Harari</td><td>Histoire</td><td><span class="badge ok">Disponible</span></td><td class="act"><span class="btn sm">Voir</span><span class="btn sm">Modifier</span><span class="btn sm danger-ghost">Supprimer</span></td></tr>
+                <tr><td class="n">5</td><td><b>Clean Code</b></td><td>Robert C. Martin</td><td>Informatique</td><td><span class="badge ok">Disponible</span></td><td class="act"><span class="btn sm">Voir</span><span class="btn sm">Modifier</span><span class="btn sm danger-ghost">Supprimer</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+      <div class="notes">
+        <div><h5>Cas d'utilisation</h5><p>Point d'entrée de UC4, UC5, UC6. Réservé au rôle ADMIN.</p></div>
+        <div><h5>API</h5><span class="ep"><span class="verb get">GET</span>/api/livres</span><span class="ep"><span class="verb get">GET</span>/api/livres/titre/{titre}</span><span class="ep"><span class="verb get">GET</span>/api/livres/auteur/{auteur}</span></div>
+        <div><h5>Attributs UML</h5><p>Livre : <code>id</code>, <code>titre</code>, <code>auteur</code>, <code>categorie</code>, <code>disponible</code></p></div>
+        <div><h5>Messages</h5>
+          <div class="msg"><span class="c info">200</span><span>Liste vide : « Le catalogue est vide. Ajoutez un premier livre pour l'ouvrir aux emprunts. »</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- E6 -->
+    <div class="frame" id="e6" style="grid-column:2;grid-row:1">
+      <div class="frame-label"><span class="fid">E6</span><b>Ajouter un livre</b> Administrateur</div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="brand"><span class="mark"></span><strong>Médiathèque</strong></div>
+          <div class="crumbs">Livres <i>/</i> <b>Nouveau livre</b></div>
+          <div class="who"><span class="avatar admin">AL</span><span class="who-name">Andria Lova<small>ADMIN</small></span><span class="logout"><svg class="i"><use href="#i-logout"/></svg>Se déconnecter</span></div>
+        </div>
+        <nav class="side">
+          <h6>Administration</h6>
+          <span class="nav on"><svg class="i"><use href="#i-books"/></svg>Livres</span>
+          <span class="nav"><svg class="i"><use href="#i-users"/></svg>Utilisateurs</span>
+          <span class="nav"><svg class="i"><use href="#i-swap"/></svg>Emprunts</span>
+          <h6>Espace lecteur</h6>
+          <span class="nav"><svg class="i"><use href="#i-grid"/></svg>Catalogue</span>
+          <span class="nav"><svg class="i"><use href="#i-return"/></svg>Retourner un livre</span>
+        </nav>
+        <main class="content">
+          <div class="page-head"><div><h1>Nouveau livre</h1><p>Le livre sera immédiatement proposé à l'emprunt.</p></div></div>
+          <div class="two">
+            <div class="card card-pad">
+              <div class="field"><label><span>Titre<span class="req">*</span></span><code>titre</code></label><div class="input focus">Clean Code</div></div>
+              <div class="field"><label><span>Auteur<span class="req">*</span></span><code>auteur</code></label><div class="input">Robert C. Martin</div></div>
+              <div class="field"><label><span>Catégorie<span class="req">*</span></span><code>categorie</code></label><div class="input select">Informatique</div></div>
+              <div class="grid2">
+                <div class="field"><label>N° <code>id</code></label><div class="input ro">Automatique</div></div>
+                <div class="field"><label>Disponibilité <code>disponible</code></label><div class="input ro"><span class="badge ok">Disponible</span></div></div>
+              </div>
+              <div class="btns"><span class="btn primary">Ajouter le livre</span><span class="btn">Annuler</span></div>
+            </div>
+            <div class="card card-pad">
+              <h3>Bon à savoir</h3>
+              <p class="sub">Règles appliquées à l'enregistrement</p>
+              <ul class="tips">
+                <li>Le titre doit être unique dans le catalogue.</li>
+                <li>Le numéro est attribué automatiquement.</li>
+                <li>La disponibilité ne se saisit pas : elle change avec les emprunts et les retours.</li>
+              </ul>
+            </div>
+          </div>
+        </main>
+      </div>
+      <div class="notes">
+        <div><h5>Cas d'utilisation</h5><p>UC4 Ajouter un livre.</p></div>
+        <div><h5>API</h5><span class="ep"><span class="verb post">POST</span>/api/livres</span><code>{ titre, auteur, categorie }</code></div>
+        <div><h5>Attributs UML</h5><p>Livre : <code>titre</code>, <code>auteur</code>, <code>categorie</code> saisis ; <code>id</code>, <code>disponible</code> calculés</p></div>
+        <div><h5>Messages</h5>
+          <div class="msg"><span class="c ok">201</span><span>« Clean Code » a été ajouté au catalogue.</span></div>
+          <div class="msg"><span class="c err">400</span><span>Le titre et l'auteur sont obligatoires.</span></div>
+          <div class="msg"><span class="c err">409</span><span>Un livre intitulé « Clean Code » existe déjà.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- E5 -->
+    <div class="frame" id="e5" style="grid-column:2;grid-row:2">
+      <div class="frame-label"><span class="fid">E5</span><b>Fiche d'un livre</b> Administrateur</div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="brand"><span class="mark"></span><strong>Médiathèque</strong></div>
+          <div class="crumbs">Livres <i>/</i> <b>1984</b></div>
+          <div class="who"><span class="avatar admin">AL</span><span class="who-name">Andria Lova<small>ADMIN</small></span><span class="logout"><svg class="i"><use href="#i-logout"/></svg>Se déconnecter</span></div>
+        </div>
+        <nav class="side">
+          <h6>Administration</h6>
+          <span class="nav on"><svg class="i"><use href="#i-books"/></svg>Livres</span>
+          <span class="nav"><svg class="i"><use href="#i-users"/></svg>Utilisateurs</span>
+          <span class="nav"><svg class="i"><use href="#i-swap"/></svg>Emprunts</span>
+          <h6>Espace lecteur</h6>
+          <span class="nav"><svg class="i"><use href="#i-grid"/></svg>Catalogue</span>
+          <span class="nav"><svg class="i"><use href="#i-return"/></svg>Retourner un livre</span>
+        </nav>
+        <main class="content">
+          <div class="card card-pad" style="margin-top:6px">
+            <div class="detail">
+              <div class="cover c-sf"><span class="ct">1984</span><span class="ca">Science-fiction</span></div>
+              <div>
+                <h2>1984</h2>
+                <div class="by">George Orwell</div>
+                <dl class="kv">
+                  <dt>N°</dt><dd>2 <code>id</code></dd>
+                  <dt>Titre</dt><dd>1984 <code>titre</code></dd>
+                  <dt>Auteur</dt><dd>George Orwell <code>auteur</code></dd>
+                  <dt>Catégorie</dt><dd>Science-fiction <code>categorie</code></dd>
+                  <dt>Disponibilité</dt><dd><span class="badge warn">Emprunté</span> <code>disponible</code></dd>
+                </dl>
+                <div class="callout"><b>Emprunt n° 2 en cours</b> par Rasoa Anna depuis le 16/10/2026, retour prévu le 30/10/2026.</div>
+                <div class="btns">
+                  <span class="btn hs-edit hot">Modifier</span>
+                  <span class="btn danger-ghost off"><svg class="i"><use href="#i-trash"/></svg>Supprimer</span>
+                  <span class="btn">Retour à la liste</span>
+                </div>
+                <div class="hint">Suppression impossible tant que l'emprunt est en cours.</div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+      <div class="notes">
+        <div><h5>Cas d'utilisation</h5><p>UCD Consulter le détail. Règle RG-06 : bouton Supprimer désactivé si un emprunt est en cours.</p></div>
+        <div><h5>API</h5><span class="ep"><span class="verb get">GET</span>/api/livres/{id}</span><span class="ep"><span class="verb get">GET</span>/api/emprunts/en-cours</span></div>
+        <div><h5>Attributs UML</h5><p>Livre : tous les attributs ; association Livre 1 → 0..* Emprunt</p></div>
+        <div><h5>Messages</h5>
+          <div class="msg"><span class="c err">404</span><span>Ce livre n'existe plus dans le catalogue.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- E7 -->
+    <div class="frame" id="e7" style="grid-column:3;grid-row:2">
+      <div class="frame-label"><span class="fid">E7</span><b>Modifier un livre</b> Administrateur</div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="brand"><span class="mark"></span><strong>Médiathèque</strong></div>
+          <div class="crumbs">Livres <i>/</i> 1984 <i>/</i> <b>Modifier</b></div>
+          <div class="who"><span class="avatar admin">AL</span><span class="who-name">Andria Lova<small>ADMIN</small></span><span class="logout"><svg class="i"><use href="#i-logout"/></svg>Se déconnecter</span></div>
+        </div>
+        <nav class="side">
+          <h6>Administration</h6>
+          <span class="nav on"><svg class="i"><use href="#i-books"/></svg>Livres</span>
+          <span class="nav"><svg class="i"><use href="#i-users"/></svg>Utilisateurs</span>
+          <span class="nav"><svg class="i"><use href="#i-swap"/></svg>Emprunts</span>
+          <h6>Espace lecteur</h6>
+          <span class="nav"><svg class="i"><use href="#i-grid"/></svg>Catalogue</span>
+          <span class="nav"><svg class="i"><use href="#i-return"/></svg>Retourner un livre</span>
+        </nav>
+        <main class="content">
+          <div class="page-head"><div><h1>Modifier « 1984 »</h1><p>Les champs modifiés sont enregistrés, les autres restent inchangés.</p></div></div>
+          <div class="two">
+            <div class="card card-pad">
+              <div class="grid2">
+                <div class="field"><label>N° <code>id</code></label><div class="input ro">2</div></div>
+                <div class="field"><label>Disponibilité <code>disponible</code></label><div class="input ro"><span class="badge warn">Emprunté</span></div></div>
+              </div>
+              <div class="field"><label><span>Titre<span class="req">*</span></span><code>titre</code></label><div class="input">1984</div></div>
+              <div class="field"><label><span>Auteur<span class="req">*</span></span><code>auteur</code></label><div class="input focus">George Orwell</div></div>
+              <div class="field"><label><span>Catégorie<span class="req">*</span></span><code>categorie</code></label><div class="input select">Science-fiction</div></div>
+              <div class="btns"><span class="btn primary">Enregistrer les modifications</span><span class="btn">Annuler</span></div>
+            </div>
+            <div class="card card-pad">
+              <h3>Bon à savoir</h3>
+              <p class="sub">Ce qui ne se modifie pas ici</p>
+              <ul class="tips">
+                <li>Le numéro est fixe.</li>
+                <li>La disponibilité change uniquement lors d'un emprunt ou d'un retour (RG-04).</li>
+                <li>Un nouveau titre ne doit pas déjà exister.</li>
+              </ul>
+            </div>
+          </div>
+        </main>
+      </div>
+      <div class="notes">
+        <div><h5>Cas d'utilisation</h5><p>UC5 Modifier un livre.</p></div>
+        <div><h5>API</h5><span class="ep"><span class="verb put">PUT</span>/api/livres/{id}</span><code>{ titre, auteur, categorie }</code></div>
+        <div><h5>Attributs UML</h5><p>Livre : tous les attributs, dont <code>id</code> et <code>disponible</code> en lecture seule</p></div>
+        <div><h5>Messages</h5>
+          <div class="msg"><span class="c ok">200</span><span>Modifications de « 1984 » enregistrées.</span></div>
+          <div class="msg"><span class="c err">409</span><span>Le titre « Sapiens » est déjà utilisé par un autre livre.</span></div>
+          <div class="msg"><span class="c err">404</span><span>Ce livre n'existe plus dans le catalogue.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- E8 -->
+    <div class="frame" id="e8" style="grid-column:2;grid-row:3">
+      <div class="frame-label"><span class="fid">E8</span><b>Supprimer un livre</b> Administrateur, boîte de dialogue sur E4</div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="brand"><span class="mark"></span><strong>Médiathèque</strong></div>
+          <div class="crumbs">Administration <i>/</i> <b>Livres</b></div>
+          <div class="who"><span class="avatar admin">AL</span><span class="who-name">Andria Lova<small>ADMIN</small></span><span class="logout"><svg class="i"><use href="#i-logout"/></svg>Se déconnecter</span></div>
+        </div>
+        <nav class="side">
+          <h6>Administration</h6>
+          <span class="nav on"><svg class="i"><use href="#i-books"/></svg>Livres</span>
+          <span class="nav"><svg class="i"><use href="#i-users"/></svg>Utilisateurs</span>
+          <span class="nav"><svg class="i"><use href="#i-swap"/></svg>Emprunts</span>
+        </nav>
+        <main class="content">
+          <div class="page-head"><div><h1>Livres</h1><p>5 livres : 3 disponibles, 2 empruntés</p></div><span class="btn primary"><svg class="i"><use href="#i-plus"/></svg>Ajouter un livre</span></div>
+          <div class="card">
+            <table class="t">
+              <thead><tr><th>N°</th><th>Titre</th><th>Auteur</th><th>Catégorie</th><th>Disponibilité</th></tr></thead>
+              <tbody>
+                <tr><td class="n">1</td><td><b>Le Petit Prince</b></td><td>Antoine de Saint-Exupéry</td><td>Roman</td><td><span class="badge ok">Disponible</span></td></tr>
+                <tr><td class="n">2</td><td><b>1984</b></td><td>George Orwell</td><td>Science-fiction</td><td><span class="badge warn">Emprunté</span></td></tr>
+                <tr><td class="n">3</td><td><b>L'Étranger</b></td><td>Albert Camus</td><td>Roman</td><td><span class="badge warn">Emprunté</span></td></tr>
+                <tr><td class="n">4</td><td><b>Sapiens</b></td><td>Yuval Noah Harari</td><td>Histoire</td><td><span class="badge ok">Disponible</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </main>
+        <div class="overlay">
+          <div class="dialog" role="dialog" aria-label="Confirmer la suppression">
+            <div class="ico"><svg class="i"><use href="#i-trash"/></svg></div>
+            <h3>Supprimer « Le Petit Prince » ?</h3>
+            <p>Le livre sera retiré du catalogue et ne pourra plus être emprunté. Ses emprunts terminés restent dans l'historique.</p>
+            <div class="btns"><span class="btn">Annuler</span><span class="btn danger">Supprimer le livre</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="notes">
+        <div><h5>Cas d'utilisation</h5><p>UC6 Supprimer un livre. Règle RG-06 : refusé si un emprunt est en cours. Suppression logique.</p></div>
+        <div><h5>API</h5><span class="ep"><span class="verb del">DELETE</span>/api/livres/{id}</span></div>
+        <div><h5>Attributs UML</h5><p>Livre : <code>titre</code> ; contrôle sur Emprunt.<code>statut</code> = <code>EN_COURS</code></p></div>
+        <div><h5>Messages</h5>
+          <div class="msg"><span class="c ok">204</span><span>« Le Petit Prince » a été supprimé du catalogue.</span></div>
+          <div class="msg"><span class="c err">409</span><span>« 1984 » ne peut pas être supprimé : un emprunt est en cours. Enregistrez d'abord son retour.</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════ P4 ADMIN UTILISATEURS ═══════════════════════════ -->
+<section class="planche" id="p4" data-links="#e9 .hs-add>#e10|Ajouter un utilisateur;#e9 .hs-edit>#e11|Modifier;#e9 .hs-del>#e12|Supprimer">
+  <div class="planche-head">
+    <h2>Parcours 4 : gérer les comptes</h2>
+    <p>L'administrateur crée, modifie et supprime les comptes. Le mot de passe est saisi mais n'est jamais affiché.</p>
+    <div class="ucs"><span><b>UC8</b> Gérer les utilisateurs</span></div>
+  </div>
+  <div class="board" style="grid-template-columns:repeat(2,1280px)">
+
+    <!-- E9 -->
+    <div class="frame" id="e9" style="grid-column:1;grid-row:1">
+      <div class="frame-label"><span class="fid">E9</span><b>Liste des utilisateurs</b> Administrateur</div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="brand"><span class="mark"></span><strong>Médiathèque</strong></div>
+          <div class="crumbs">Administration <i>/</i> <b>Utilisateurs</b></div>
+          <div class="who"><span class="avatar admin">AL</span><span class="who-name">Andria Lova<small>ADMIN</small></span><span class="logout"><svg class="i"><use href="#i-logout"/></svg>Se déconnecter</span></div>
+        </div>
+        <nav class="side">
+          <h6>Administration</h6>
+          <span class="nav"><svg class="i"><use href="#i-books"/></svg>Livres</span>
+          <span class="nav on"><svg class="i"><use href="#i-users"/></svg>Utilisateurs</span>
+          <span class="nav"><svg class="i"><use href="#i-swap"/></svg>Emprunts</span>
+          <h6>Espace lecteur</h6>
+          <span class="nav"><svg class="i"><use href="#i-grid"/></svg>Catalogue</span>
+          <span class="nav"><svg class="i"><use href="#i-return"/></svg>Retourner un livre</span>
+        </nav>
+        <main class="content">
+          <div class="page-head">
+            <div><h1>Utilisateurs</h1><p>4 comptes : 1 administrateur, 3 utilisateurs</p></div>
+            <span class="btn primary hs-add hot"><svg class="i"><use href="#i-plus"/></svg>Ajouter un utilisateur</span>
+          </div>
+          <div class="toolbar">
+            <div class="input ph grow"><svg class="i"><use href="#i-search"/></svg>Rechercher par email</div>
+            <div class="tabs"><span class="on">Tous</span><span>ADMIN</span><span>USER</span></div>
+          </div>
+          <div class="card">
+            <table class="t">
+              <thead><tr><th>N°</th><th>Nom</th><th>Email</th><th>Rôle</th><th></th></tr></thead>
+              <tbody>
+                <tr><td class="n">1</td><td><div class="person"><span class="avatar admin">AL</span><b>Andria Lova</b></div></td><td>admin@mediatheque.mg</td><td><span class="badge admin enum">ADMIN</span></td><td class="act"><span class="btn sm">Modifier</span><span class="btn sm danger-ghost">Supprimer</span></td></tr>
+                <tr><td class="n">2</td><td><div class="person"><span class="avatar">RJ</span><b>Rakoto Jean</b></div></td><td>rakoto.j@mail.mg</td><td><span class="badge user enum">USER</span></td><td class="act"><span class="btn sm hs-edit hot">Modifier</span><span class="btn sm danger-ghost">Supprimer</span></td></tr>
+                <tr><td class="n">3</td><td><div class="person"><span class="avatar">RA</span><b>Rasoa Anna</b></div></td><td>rasoa.a@mail.mg</td><td><span class="badge user enum">USER</span></td><td class="act"><span class="btn sm">Modifier</span><span class="btn sm danger-ghost">Supprimer</span></td></tr>
+                <tr><td class="n">4</td><td><div class="person"><span class="avatar">RH</span><b>Randria Hery</b></div></td><td>randria.h@mail.mg</td><td><span class="badge user enum">USER</span></td><td class="act"><span class="btn sm">Modifier</span><span class="btn sm danger-ghost hs-del hot">Supprimer</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+      <div class="notes">
+        <div><h5>Cas d'utilisation</h5><p>UC8 Gérer les utilisateurs. Réservé au rôle ADMIN.</p></div>
+        <div><h5>API</h5><span class="ep"><span class="verb get">GET</span>/api/users</span><span class="ep"><span class="verb get">GET</span>/api/users/role/{roleUser}</span><span class="ep"><span class="verb get">GET</span>/api/users/email/{email}</span></div>
+        <div><h5>Attributs UML</h5><p>Utilisateur : <code>id</code>, <code>nom</code>, <code>email</code>, <code>role</code></p></div>
+        <div><h5>Messages</h5>
+          <div class="msg"><span class="c info">200</span><span>Filtre vide : « Aucun compte avec le rôle ADMIN. Créez-en un depuis « Ajouter un utilisateur ». »</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- E10 -->
+    <div class="frame" id="e10" style="grid-column:2;grid-row:1">
+      <div class="frame-label"><span class="fid">E10</span><b>Ajouter un utilisateur</b> Administrateur</div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="brand"><span class="mark"></span><strong>Médiathèque</strong></div>
+          <div class="crumbs">Utilisateurs <i>/</i> <b>Nouveau compte</b></div>
+          <div class="who"><span class="avatar admin">AL</span><span class="who-name">Andria Lova<small>ADMIN</small></span><span class="logout"><svg class="i"><use href="#i-logout"/></svg>Se déconnecter</span></div>
+        </div>
+        <nav class="side">
+          <h6>Administration</h6>
+          <span class="nav"><svg class="i"><use href="#i-books"/></svg>Livres</span>
+          <span class="nav on"><svg class="i"><use href="#i-users"/></svg>Utilisateurs</span>
+          <span class="nav"><svg class="i"><use href="#i-swap"/></svg>Emprunts</span>
+          <h6>Espace lecteur</h6>
+          <span class="nav"><svg class="i"><use href="#i-grid"/></svg>Catalogue</span>
+          <span class="nav"><svg class="i"><use href="#i-return"/></svg>Retourner un livre</span>
+        </nav>
+        <main class="content">
+          <div class="page-head"><div><h1>Nouveau compte</h1><p>La personne pourra se connecter dès la création.</p></div></div>
+          <div class="two">
+            <div class="card card-pad">
+              <div class="field"><label><span>Nom complet<span class="req">*</span></span><code>nom</code></label><div class="input">Randria Hery</div></div>
+              <div class="field"><label><span>Email<span class="req">*</span></span><code>email</code></label><div class="input focus">randria.h@mail.mg</div></div>
+              <div class="field"><label><span>Mot de passe<span class="req">*</span></span><code>password</code></label><div class="input">••••••••</div></div>
+              <div class="field"><label><span>Rôle<span class="req">*</span></span><code>role</code></label><div class="seg"><span class="on">USER</span><span>ADMIN</span></div></div>
+              <div class="btns"><span class="btn primary">Créer le compte</span><span class="btn">Annuler</span></div>
+            </div>
+            <div class="card card-pad">
+              <h3>Bon à savoir</h3>
+              <p class="sub">Règles appliquées à la création</p>
+              <ul class="tips">
+                <li>L'email doit être unique : il sert d'identifiant de connexion.</li>
+                <li>Le mot de passe est chiffré avant enregistrement et n'est jamais réaffiché.</li>
+                <li>Le rôle ne pourra plus être modifié ensuite.</li>
+                <li>Le numéro est attribué automatiquement.</li>
+              </ul>
+            </div>
+          </div>
+        </main>
+      </div>
+      <div class="notes">
+        <div><h5>Cas d'utilisation</h5><p>UC8 Gérer les utilisateurs : création.</p></div>
+        <div><h5>API</h5><span class="ep"><span class="verb post">POST</span>/api/users?roleUser={role}</span><code>{ nom, email, password }</code></div>
+        <div><h5>Attributs UML</h5><p>Utilisateur : <code>nom</code>, <code>email</code>, <code>password</code>, <code>role</code> saisis ; <code>id</code> calculé</p></div>
+        <div><h5>Messages</h5>
+          <div class="msg"><span class="c ok">201</span><span>Le compte de Randria Hery a été créé.</span></div>
+          <div class="msg"><span class="c err">409</span><span>L'email randria.h@mail.mg est déjà utilisé par un autre compte.</span></div>
+          <div class="msg"><span class="c err">IHM</span><span>Renseignez le nom, l'email, le mot de passe et le rôle.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- E11 -->
+    <div class="frame" id="e11" style="grid-column:2;grid-row:2">
+      <div class="frame-label"><span class="fid">E11</span><b>Modifier un utilisateur</b> Administrateur</div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="brand"><span class="mark"></span><strong>Médiathèque</strong></div>
+          <div class="crumbs">Utilisateurs <i>/</i> Rakoto Jean <i>/</i> <b>Modifier</b></div>
+          <div class="who"><span class="avatar admin">AL</span><span class="who-name">Andria Lova<small>ADMIN</small></span><span class="logout"><svg class="i"><use href="#i-logout"/></svg>Se déconnecter</span></div>
+        </div>
+        <nav class="side">
+          <h6>Administration</h6>
+          <span class="nav"><svg class="i"><use href="#i-books"/></svg>Livres</span>
+          <span class="nav on"><svg class="i"><use href="#i-users"/></svg>Utilisateurs</span>
+          <span class="nav"><svg class="i"><use href="#i-swap"/></svg>Emprunts</span>
+          <h6>Espace lecteur</h6>
+          <span class="nav"><svg class="i"><use href="#i-grid"/></svg>Catalogue</span>
+          <span class="nav"><svg class="i"><use href="#i-return"/></svg>Retourner un livre</span>
+        </nav>
+        <main class="content">
+          <div class="page-head"><div><h1>Modifier le compte de Rakoto Jean</h1><p>Les champs laissés vides restent inchangés.</p></div></div>
+          <div class="two">
+            <div class="card card-pad">
+              <div class="grid2">
+                <div class="field"><label>N° <code>id</code></label><div class="input ro">2</div></div>
+                <div class="field"><label>Rôle <code>role</code></label><div class="input ro"><span class="badge user enum">USER</span></div></div>
+              </div>
+              <div class="field"><label><span>Nom complet<span class="req">*</span></span><code>nom</code></label><div class="input">Rakoto Jean</div></div>
+              <div class="field"><label><span>Email<span class="req">*</span></span><code>email</code></label><div class="input focus">rakoto.j@mail.mg</div></div>
+              <div class="field"><label>Nouveau mot de passe <code>password</code></label><div class="input ph">Laisser vide pour le conserver</div></div>
+              <div class="btns"><span class="btn primary">Enregistrer les modifications</span><span class="btn">Annuler</span></div>
+            </div>
+            <div class="card card-pad">
+              <h3>Bon à savoir</h3>
+              <p class="sub">Ce qui ne se modifie pas ici</p>
+              <ul class="tips">
+                <li>Le numéro et le rôle sont fixés à la création.</li>
+                <li>Le mot de passe actuel n'est jamais affiché.</li>
+              </ul>
+            </div>
+          </div>
+        </main>
+      </div>
+      <div class="notes">
+        <div><h5>Cas d'utilisation</h5><p>UC8 Gérer les utilisateurs : modification.</p></div>
+        <div><h5>API</h5><span class="ep"><span class="verb put">PUT</span>/api/users/{id}</span><code>{ nom, email, password }</code></div>
+        <div><h5>Attributs UML</h5><p>Utilisateur : tous les attributs, dont <code>id</code> et <code>role</code> en lecture seule</p></div>
+        <div><h5>Messages</h5>
+          <div class="msg"><span class="c ok">200</span><span>Le compte de Rakoto Jean a été mis à jour.</span></div>
+          <div class="msg"><span class="c err">404</span><span>Ce compte n'existe plus.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- E12 -->
+    <div class="frame" id="e12" style="grid-column:2;grid-row:3">
+      <div class="frame-label"><span class="fid">E12</span><b>Supprimer un utilisateur</b> Administrateur, boîte de dialogue sur E9</div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="brand"><span class="mark"></span><strong>Médiathèque</strong></div>
+          <div class="crumbs">Administration <i>/</i> <b>Utilisateurs</b></div>
+          <div class="who"><span class="avatar admin">AL</span><span class="who-name">Andria Lova<small>ADMIN</small></span><span class="logout"><svg class="i"><use href="#i-logout"/></svg>Se déconnecter</span></div>
+        </div>
+        <nav class="side">
+          <h6>Administration</h6>
+          <span class="nav"><svg class="i"><use href="#i-books"/></svg>Livres</span>
+          <span class="nav on"><svg class="i"><use href="#i-users"/></svg>Utilisateurs</span>
+          <span class="nav"><svg class="i"><use href="#i-swap"/></svg>Emprunts</span>
+        </nav>
+        <main class="content">
+          <div class="page-head"><div><h1>Utilisateurs</h1><p>4 comptes : 1 administrateur, 3 utilisateurs</p></div><span class="btn primary"><svg class="i"><use href="#i-plus"/></svg>Ajouter un utilisateur</span></div>
+          <div class="card">
+            <table class="t">
+              <thead><tr><th>N°</th><th>Nom</th><th>Email</th><th>Rôle</th></tr></thead>
+              <tbody>
+                <tr><td class="n">1</td><td><b>Andria Lova</b></td><td>admin@mediatheque.mg</td><td><span class="badge admin enum">ADMIN</span></td></tr>
+                <tr><td class="n">2</td><td><b>Rakoto Jean</b></td><td>rakoto.j@mail.mg</td><td><span class="badge user enum">USER</span></td></tr>
+                <tr><td class="n">3</td><td><b>Rasoa Anna</b></td><td>rasoa.a@mail.mg</td><td><span class="badge user enum">USER</span></td></tr>
+                <tr><td class="n">4</td><td><b>Randria Hery</b></td><td>randria.h@mail.mg</td><td><span class="badge user enum">USER</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </main>
+        <div class="overlay">
+          <div class="dialog" role="dialog" aria-label="Confirmer la suppression">
+            <div class="ico"><svg class="i"><use href="#i-trash"/></svg></div>
+            <h3>Supprimer le compte de Randria Hery ?</h3>
+            <p>La personne ne pourra plus se connecter. Son historique d'emprunts est conservé.</p>
+            <div class="btns"><span class="btn">Annuler</span><span class="btn danger">Supprimer le compte</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="notes">
+        <div><h5>Cas d'utilisation</h5><p>UC8 Gérer les utilisateurs : suppression logique.</p></div>
+        <div><h5>API</h5><span class="ep"><span class="verb del">DELETE</span>/api/users/{id}</span></div>
+        <div><h5>Attributs UML</h5><p>Utilisateur : <code>id</code>, <code>nom</code></p></div>
+        <div><h5>Messages</h5>
+          <div class="msg"><span class="c ok">204</span><span>Le compte de Randria Hery a été supprimé.</span></div>
+          <div class="msg"><span class="c err">404</span><span>Ce compte n'existe pas ou a déjà été supprimé.</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div>
+
+<div class="zoom" role="group" aria-label="Zoom">
+  <button type="button" data-z="0.25">25 %</button>
+  <button type="button" data-z="0.5">50 %</button>
+  <button type="button" data-z="1">100 %</button>
+</div>
+
+<script>
+// Trace les flèches de navigation de chaque planche, à l'échelle 1, puis applique le zoom d'affichage.
+const NS = 'http://www.w3.org/2000/svg';
+
+function drawLinks() {
+  document.querySelectorAll('.planche[data-links]').forEach((planche) => {
+    planche.querySelector(':scope > svg.links')?.remove();
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('class', 'links');
+    svg.setAttribute('width', planche.offsetWidth);
+    svg.setAttribute('height', planche.offsetHeight);
+    planche.prepend(svg);
+    const origin = planche.getBoundingClientRect();
+
+    planche.dataset.links.split(';').forEach((spec) => {
+      const [route, label] = spec.split('|');
+      const [fromSel, toSel] = route.split('>');
+      const from = planche.querySelector(fromSel).getBoundingClientRect();
+      const to = planche.querySelector(toSel + ' .screen').getBoundingClientRect();
+      const sx = from.right - origin.left + 6, sy = from.top + from.height / 2 - origin.top;
+      const tx = to.left - origin.left - 4, ty = to.top + Math.min(to.height / 2, 260) - origin.top;
+      const dx = Math.max(120, (tx - sx) * 0.45);
+      const path = document.createElementNS(NS, 'path');
+      path.setAttribute('d', `M${sx} ${sy} C${sx + dx} ${sy} ${tx - dx} ${ty} ${tx - 14} ${ty}`);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', '#2F6FED');
+      path.setAttribute('stroke-width', '3');
+      svg.appendChild(path);
+      const head = document.createElementNS(NS, 'path');
+      head.setAttribute('d', `M${tx - 18} ${ty - 10} L${tx} ${ty} L${tx - 18} ${ty + 10} Z`);
+      head.setAttribute('fill', '#2F6FED');
+      svg.appendChild(head);
+
+      const dot = document.createElementNS(NS, 'circle');
+      dot.setAttribute('cx', sx); dot.setAttribute('cy', sy); dot.setAttribute('r', 5); dot.setAttribute('fill', '#2F6FED');
+      svg.appendChild(dot);
+
+      // Libellé posé sur la partie horizontale finale de la flèche
+      const lx = tx - 30, ly = ty - 22;
+      const text = document.createElementNS(NS, 'text');
+      text.setAttribute('class', 'link-label');
+      text.setAttribute('x', lx); text.setAttribute('y', ly);
+      text.setAttribute('text-anchor', 'end');
+      text.textContent = label;
+      svg.appendChild(text);
+      const bb = text.getBBox();
+      const bg = document.createElementNS(NS, 'rect');
+      bg.setAttribute('class', 'link-bg');
+      bg.setAttribute('x', bb.x - 10); bg.setAttribute('y', bb.y - 5);
+      bg.setAttribute('width', bb.width + 20); bg.setAttribute('height', bb.height + 10);
+      bg.setAttribute('rx', 6);
+      svg.insertBefore(bg, text);
+    });
+  });
+}
+
+function setZoom(z) {
+  document.getElementById('canvas').style.zoom = z;
+  document.querySelectorAll('.zoom button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.z === String(z))));
+}
+
+document.querySelectorAll('.input.select').forEach((el) => el.insertAdjacentHTML('beforeend', '<svg class="i chev"><use href="#i-chev"/></svg>'));
+
+document.fonts.ready.then(() => {
+  drawLinks();
+  setZoom(new URLSearchParams(location.search).get('zoom') || '0.5');
+  document.body.dataset.ready = 'true';
+});
+document.querySelectorAll('.zoom button').forEach((b) => b.addEventListener('click', () => setZoom(b.dataset.z)));
+</script>
+</body>
+</html>

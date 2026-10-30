@@ -308,6 +308,28 @@ pre.mermaid svg{
 
 .timeline-name{font-weight:600}
 
+/* slide IHM */
+.ihm-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:22px;flex:1;min-height:0}
+.ihm-preview{margin:0;display:flex;flex-direction:column;gap:10px;min-height:0}
+.ihm-preview .browser-chrome{flex:1;min-height:0}
+.ihm-shot{flex:1;min-height:0;background:#e6e9ed;display:flex;align-items:center;justify-content:center;padding:10px}
+.ihm-shot img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.ihm-preview figcaption{font-size:13.5px;color:var(--ink-dim);line-height:1.45}
+.ihm-preview figcaption b{color:var(--ink);font-weight:600}
+.ihm-side{display:flex;flex-direction:column;gap:14px;min-height:0}
+.ihm-flows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.ihm-flows li{display:grid;grid-template-columns:38px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.ihm-flows li:first-child{padding-top:0}
+.ihm-flows .n{font-family:"IBM Plex Mono",monospace;color:var(--brass);font-size:14px;font-weight:600}
+.ihm-flows b{display:block;font-family:"Fraunces",serif;font-size:17.5px;font-weight:600;line-height:1.2}
+.ihm-flows small{display:block;color:var(--ink-dim);font-size:13px;margin-top:2px}
+.ihm-deliv{padding:16px 18px;flex:0 0 auto;display:block;margin-top:auto}
+.ihm-deliv h4{font-size:17px;margin:0 0 6px}
+.ihm-deliv p{font-size:14px}
+.ihm-link{display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:7px 14px;border-radius:999px;background:var(--brass);color:var(--bg);font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;text-decoration:none}
+.ihm-link:hover{background:var(--brass-strong)}
+.ihm-link:focus-visible{outline:2px solid var(--brass-strong);outline-offset:2px}
+
 /* closing */
 .slide.closing{align-items:center;justify-content:center;text-align:center}
 .slide.closing h2{font-size:56px}
@@ -777,32 +799,33 @@ sequenceDiagram
         <section class="slide" data-title="Conception IHM — maquettes" data-eyebrow="Étape 04 — Conception IHM">
           <div class="slide-head">
             <span class="eyebrow-chip">Étape 04 — Conception IHM</span>
-            <h2>11 écrans, <em>pensés par rôle</em></h2>
-            <p class="slide-sub">Avant de coder l'API, on a maquetté le futur client web/mobile — pour valider les parcours utilisateur et administrateur sur les mêmes règles de gestion.</p>
+            <h2>15 écrans, 4 parcours, <em>pensés par rôle</em></h2>
+            <p class="slide-sub">Avant de coder l'API, on a maquetté le futur client web dans Figma : chaque écran est relié par une flèche à l'écran suivant, à son endpoint et aux attributs du diagramme de classes.</p>
           </div>
-          <div class="grid2" style="flex:1">
-            <div class="card">
-              <h4><span class="pill admin">Admin</span> Gestion du catalogue & des comptes</h4>
-              <ul class="checklist">
-                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Liste des livres</li>
-                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Détail / Ajouter / Modifier un livre</li>
-                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Liste des utilisateurs</li>
-                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Ajouter / Modifier un utilisateur</li>
-                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Liste des emprunts</li>
-                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Boîte de dialogue — confirmation de suppression</li>
-              </ul>
-            </div>
-            <div class="card">
-              <h4><span class="pill user">Utilisateur / Admin</span> Emprunts</h4>
-              <ul class="checklist">
-                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Emprunter un livre</li>
-                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Retourner un livre</li>
-              </ul>
-              <p style="margin-top:16px">Livrable&nbsp;: <code>Conception_IHM_Mediatheque.pdf</code> + prototype HTML interactif — validés avant le début du développement de l'API.</p>
+          <div class="ihm-grid">
+            <figure class="ihm-preview">
+              <div class="browser-chrome">
+                <div class="bb"><i></i><i></i><i></i><span class="url">figma.com — Médiathèque — Maquettes IHM / P2</span></div>
+                <div class="ihm-shot"><img src="../ihm/maquettes/P2_parcours-retour-suivi.png" alt="Planche P2 : l'écran Suivi des emprunts de l'administrateur, dont le bouton Retour mène par une flèche à l'écran Retourner un livre ; sous chaque écran, une note indique le cas d'utilisation, l'endpoint, les attributs UML et les messages."></div>
+              </div>
+              <figcaption><b>Planche P2.</b> Le bouton cliqué est encadré en bleu, la flèche mène à l'écran suivant, et la note jaune indique cas d'utilisation, endpoint, attributs UML et codes HTTP.</figcaption>
+            </figure>
+            <div class="ihm-side">
+              <ol class="ihm-flows">
+                <li><span class="n">P1</span><div><b>Se connecter et emprunter</b><small>Connexion, catalogue, fiche, emprunt</small></div><span class="pill user">Lecteur</span></li>
+                <li><span class="n">P2</span><div><b>Retour et suivi des emprunts</b><small>Suivi des emprunts, retour</small></div><span class="pill admin">Admin</span></li>
+                <li><span class="n">P3</span><div><b>Gérer le catalogue</b><small>Liste, ajout, fiche, modification, suppression</small></div><span class="pill admin">Admin</span></li>
+                <li><span class="n">P4</span><div><b>Gérer les comptes</b><small>Liste, ajout, modification, suppression</small></div><span class="pill admin">Admin</span></li>
+              </ol>
+              <div class="card ihm-deliv">
+                <h4>Livrables</h4>
+                <p><code>Conception_IHM_Mediatheque.pdf</code> (24 pages, une fiche par écran) et les 4 planches PNG dans <code>ihm/maquettes/</code>.</p>
+                <a class="ihm-link" href="https://www.figma.com/design/C9b0QZslewrQHDos2vf7ZK/M%C3%A9diath%C3%A8que-%E2%80%94-Maquettes-IHM?node-id=0-1" target="_blank" rel="noopener">Ouvrir la maquette dans Figma</a>
+              </div>
             </div>
           </div>
           <div class="notes" hidden>
-            <p>On montre que la maquette n'était pas un exercice isolé : les 11 écrans couvrent exactement les mêmes actions que le diagramme de cas d'utilisation vu juste avant.</p>
+            <p>Les 15 écrans couvrent exactement les cas d'utilisation vus juste avant, regroupés en quatre parcours. On montre la planche P2 : l'administrateur clique sur Retour dans le suivi des emprunts et arrive sur l'écran de retour. La note sous chaque écran fait le lien avec l'UML et l'API. Le fichier Figma contient les mêmes planches en calques modifiables.</p>
           </div>
         </section>
 
