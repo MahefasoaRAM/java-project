@@ -308,6 +308,28 @@ pre.mermaid svg{
 
 .timeline-name{font-weight:600}
 
+/* slide IHM */
+.ihm-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:22px;flex:1;min-height:0}
+.ihm-preview{margin:0;display:flex;flex-direction:column;gap:10px;min-height:0}
+.ihm-preview .browser-chrome{flex:1;min-height:0}
+.ihm-shot{flex:1;min-height:0;background:#e6e9ed;display:flex;align-items:center;justify-content:center;padding:10px}
+.ihm-shot img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.ihm-preview figcaption{font-size:13.5px;color:var(--ink-dim);line-height:1.45}
+.ihm-preview figcaption b{color:var(--ink);font-weight:600}
+.ihm-side{display:flex;flex-direction:column;gap:14px;min-height:0}
+.ihm-flows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.ihm-flows li{display:grid;grid-template-columns:38px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.ihm-flows li:first-child{padding-top:0}
+.ihm-flows .n{font-family:"IBM Plex Mono",monospace;color:var(--brass);font-size:14px;font-weight:600}
+.ihm-flows b{display:block;font-family:"Fraunces",serif;font-size:17.5px;font-weight:600;line-height:1.2}
+.ihm-flows small{display:block;color:var(--ink-dim);font-size:13px;margin-top:2px}
+.ihm-deliv{padding:16px 18px;flex:0 0 auto;display:block;margin-top:auto}
+.ihm-deliv h4{font-size:17px;margin:0 0 6px}
+.ihm-deliv p{font-size:14px}
+.ihm-link{display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:7px 14px;border-radius:999px;background:var(--brass);color:var(--bg);font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;text-decoration:none}
+.ihm-link:hover{background:var(--brass-strong)}
+.ihm-link:focus-visible{outline:2px solid var(--brass-strong);outline-offset:2px}
+
 /* closing */
 .slide.closing{align-items:center;justify-content:center;text-align:center}
 .slide.closing h2{font-size:56px}
@@ -507,7 +529,7 @@ body[data-mode="presenter"] .presenter-panel{display:flex}
           <div class="grid2">
             <div class="card">
               <h4><span class="pill user">Utilisateur</span></h4>
-              <p style="margin-top:10px">Personne enregistrée dans le système, pouvant consulter le catalogue et gérer ses propres emprunts.</p>
+              <p style="margin-top:10px">Personne enregistrée dans le système (rôle <code>USER</code>), qui se connecte pour consulter le catalogue et gérer ses emprunts.</p>
               <ul class="checklist" style="margin-top:14px">
                 <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Consulter le catalogue de livres</li>
                 <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Emprunter un livre disponible</li>
@@ -517,7 +539,7 @@ body[data-mode="presenter"] .presenter-panel{display:flex}
             </div>
             <div class="card">
               <h4><span class="pill admin">Administrateur</span></h4>
-              <p style="margin-top:10px">Responsable de la gestion du catalogue et de la supervision des comptes et des emprunts.</p>
+              <p style="margin-top:10px">Rôle <code>ADMIN</code>. Hérite de tous les cas de l'Utilisateur et gère en plus le catalogue, les comptes et les emprunts.</p>
               <ul class="checklist" style="margin-top:14px">
                 <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Ajouter / modifier / supprimer un livre</li>
                 <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Gérer les comptes utilisateurs</li>
@@ -616,8 +638,8 @@ body[data-mode="presenter"] .presenter-panel{display:flex}
               <table>
                 <tr><th>Entité</th><th>Attributs</th><th>Actions</th></tr>
                 <tr><td>Livre</td><td class="dim">titre, auteur, catégorie, disponibilité</td><td class="dim">CRUD + recherche</td></tr>
-                <tr><td>Utilisateur</td><td class="dim">nom, email, rôle</td><td class="dim">CRUD + filtrage</td></tr>
-                <tr><td>Emprunt</td><td class="dim">utilisateur, livre, dates, statut</td><td class="dim">créer, retourner, lister</td></tr>
+                <tr><td>Utilisateur</td><td class="dim">nom, email, mot de passe, rôle</td><td class="dim">CRUD + filtrage</td></tr>
+                <tr><td>Emprunt</td><td class="dim">emprunteur, livre, dates, statut</td><td class="dim">créer, retourner, lister</td></tr>
               </table>
             </div>
             <div class="card">
@@ -642,37 +664,52 @@ body[data-mode="presenter"] .presenter-panel{display:flex}
           <div class="slide-head">
             <span class="eyebrow-chip">Étape 03 — Conception UML</span>
             <h2>Diagramme de <em>cas d'utilisation</em></h2>
+            <p class="slide-sub">L'Administrateur hérite des cas de l'Utilisateur ; « Se connecter » est inclus dans chaque cas protégé et la fiche d'un livre étend le catalogue.</p>
           </div>
           <pre class="mermaid">
 flowchart LR
-    Utilisateur(["👤 Utilisateur"])
-    Admin(["👤 Administrateur"])
 
-    subgraph Système_Médiathèque["Système Médiathèque"]
+    ADMIN(["🧍&lt;br/&gt;&lt;b&gt;Administrateur&lt;/b&gt;"])
+    UTILISATEUR(["🧍&lt;br/&gt;&lt;b&gt;Utilisateur&lt;/b&gt;"])
+
+    ADMIN -.-&gt;|"hérite de (généralisation)"| UTILISATEUR
+
+    subgraph SYSTEME["Système Médiathèque"]
         direction TB
-        UC1["Consulter le catalogue"]
-        UC2["Emprunter un livre"]
-        UC3["Retourner un livre"]
-        UC4["Ajouter un livre"]
-        UC5["Modifier un livre"]
-        UC6["Supprimer un livre"]
-        UC7["Consulter les emprunts"]
-        UC8["Gérer les utilisateurs"]
+        UC0(["Se connecter"])
+        UC1(["Consulter le catalogue"])
+        UC2(["Emprunter un livre"])
+        UC3(["Retourner un livre"])
+        UC4(["Ajouter un livre"])
+        UC5(["Modifier un livre"])
+        UC6(["Supprimer un livre"])
+        UC7(["Consulter les emprunts"])
+        UC8(["Gérer les utilisateurs"])
+
+        UC2 -.-&gt;|"«include»"| UC0
+        UC3 -.-&gt;|"«include»"| UC0
+        UC4 -.-&gt;|"«include»"| UC0
+        UC5 -.-&gt;|"«include»"| UC0
+        UC6 -.-&gt;|"«include»"| UC0
+        UC7 -.-&gt;|"«include»"| UC0
+        UC8 -.-&gt;|"«include»"| UC0
+
+        UCD(["Consulter le détail d'un livre"])
+        UCD -.-&gt;|"«extend»"| UC1
     end
 
-    Utilisateur --> UC1
-    Utilisateur --> UC2
-    Utilisateur --> UC3
+    UTILISATEUR --&gt; UC1
+    UTILISATEUR --&gt; UC2
+    UTILISATEUR --&gt; UC3
 
-    Admin --> UC1
-    Admin --> UC4
-    Admin --> UC5
-    Admin --> UC6
-    Admin --> UC7
-    Admin --> UC8
+    ADMIN --&gt; UC4
+    ADMIN --&gt; UC5
+    ADMIN --&gt; UC6
+    ADMIN --&gt; UC7
+    ADMIN --&gt; UC8
           </pre>
           <div class="notes" hidden>
-            <p>On retrouve exactement les deux acteurs vus au cadrage. L'utilisateur agit sur ses propres emprunts, l'administrateur a la main sur tout le catalogue.</p>
+            <p>On retrouve les deux acteurs du cadrage. La flèche pointillée « hérite de » est une généralisation : l'administrateur peut tout ce que fait l'utilisateur, plus l'administration. «include» : impossible d'emprunter, retourner ou gérer sans passer par « Se connecter » (le jeton JWT). «extend» : consulter la fiche d'un livre est une extension optionnelle du catalogue. Ce diagramme est identique à analyse/uml-cas-utilisation.mmd.</p>
           </div>
         </section>
 
@@ -681,9 +718,20 @@ flowchart LR
           <div class="slide-head">
             <span class="eyebrow-chip">Étape 03 — Conception UML</span>
             <h2>Diagramme de <em>classes</em></h2>
+            <p class="slide-sub">Les trois entités persistées et leurs énumérations, telles qu'implémentées dans <code>entity/</code> et <code>enums/</code>.</p>
           </div>
           <pre class="mermaid">
 classDiagram
+    direction LR
+
+    class Utilisateur {
+        +Long id
+        +String nom
+        +String email
+        +String password
+        +RoleUser role
+    }
+
     class Livre {
         +Long id
         +String titre
@@ -691,49 +739,34 @@ classDiagram
         +String categorie
         +boolean disponible
     }
-    class Utilisateur {
-        +Long id
-        +String nom
-        +String email
-        +Role role
-    }
+
     class Emprunt {
         +Long id
         +LocalDate dateEmprunt
         +LocalDate dateRetourPrevue
-        +StatutEmprunt statut
+        +EmpruntStatus statut
     }
-    class StatutEmprunt {
+
+    class RoleUser {
+        &lt;&lt;enumeration&gt;&gt;
+        ADMIN
+        USER
+    }
+
+    class EmpruntStatus {
         &lt;&lt;enumeration&gt;&gt;
         EN_COURS
         TERMINE
     }
-    class Role {
-        &lt;&lt;enumeration&gt;&gt;
-        UTILISATEUR
-        ADMINISTRATEUR
-    }
-    class LivreService {
-        &lt;&lt;interface&gt;&gt;
-        +ajouterLivre(LivreDTO) LivreDTO
-        +supprimerLivre(Long) void
-        +getLivres() List~LivreDTO~
-    }
-    class EmpruntService {
-        &lt;&lt;interface&gt;&gt;
-        +emprunterLivre(EmpruntDTO) EmpruntDTO
-        +retournerLivre(Long) EmpruntDTO
-    }
 
-    Emprunt "many" --> "1" Utilisateur : emprunteur
-    Emprunt "many" --> "1" Livre : livre
-    Emprunt --> StatutEmprunt
-    Utilisateur --> Role
-    LivreService ..> Livre : gère
-    EmpruntService ..> Emprunt : gère
+    Utilisateur "1" --&gt; "0..*" Emprunt : effectue
+    Livre "1" --&gt; "0..*" Emprunt : concerné par
+
+    Utilisateur ..&gt; RoleUser : utilise
+    Emprunt ..&gt; EmpruntStatus : utilise
           </pre>
           <div class="notes" hidden>
-            <p>Emprunt est la table d'association enrichie entre Utilisateur et Livre — c'est elle qui porte les dates et le statut. On garde ici une version condensée du diagramme complet (disponible dans analyse/uml-classes.mmd) pour rester lisible à l'écran.</p>
+            <p>Emprunt relie exactement un utilisateur et un livre, et porte les dates et le statut. Un utilisateur effectue 0 à n emprunts, un livre est concerné par 0 à n emprunts. Les énumérations sont celles du code : RoleUser (ADMIN, USER) et EmpruntStatus (EN_COURS, TERMINE). Ce diagramme est identique à analyse/uml-classes.mmd, et chaque attribut se retrouve dans les maquettes IHM.</p>
           </div>
         </section>
 
@@ -742,34 +775,55 @@ classDiagram
           <div class="slide-head">
             <span class="eyebrow-chip">Étape 03 — Conception UML</span>
             <h2>Séquence — <em>emprunter un livre</em></h2>
-            <p class="slide-sub">Le cas nominal <b style="color:var(--ink)">et</b> le cas d'erreur (RG-01) sont modélisés dès la conception.</p>
+            <p class="slide-sub">Le cas nominal <b style="color:var(--ink)">et</b> les deux cas d'erreur, 404 (RG-05) et 409 (RG-01, RG-02), sont modélisés dès la conception.</p>
           </div>
           <pre class="mermaid">
 sequenceDiagram
-    actor Client
-    participant EmpruntController
-    participant EmpruntService
-    participant LivreRepository
-    participant EmpruntRepository
+    actor Utilisateur
+    participant API as EmpruntController
+    participant SVC as EmpruntService
+    participant UREPO as UserRepository
+    participant LREPO as LivreRepository
+    participant EREPO as EmpruntRepository
 
-    Client->>EmpruntController: POST /api/emprunts\n{ livreId, utilisateurId, dateRetourPrevue }
-    EmpruntController->>EmpruntService: emprunterLivre(dto)
-    EmpruntService->>LivreRepository: findById(livreId)
-    LivreRepository-->>EmpruntService: Livre
+    Utilisateur-&gt;&gt;API: 1. POST /api/emprunts { livreId, dateRetourPrevue }
+    activate API
+    API-&gt;&gt;SVC: 2. emprunterLivre(empruntRequest)
+    activate SVC
 
-    alt Livre indisponible
-        EmpruntService-->>EmpruntController: LivreIndisponibleException
-        EmpruntController-->>Client: 409 Conflict
+    SVC-&gt;&gt;UREPO: 3. findById(utilisateurId)  [utilisateur connecté via JWT]
+    activate UREPO
+    UREPO--&gt;&gt;SVC: 4. Utilisateur | ResourceNotFoundException
+    deactivate UREPO
+
+    SVC-&gt;&gt;LREPO: 5. findById(livreId)
+    activate LREPO
+    LREPO--&gt;&gt;SVC: 6. Livre | ResourceNotFoundException
+    deactivate LREPO
+
+    alt Utilisateur ou livre introuvable
+        SVC--&gt;&gt;API: 7a. ResourceNotFoundException
+        API--&gt;&gt;Utilisateur: 8a. 404 Not Found { erreur }
+    else Livre indisponible (RG-01/RG-02)
+        SVC--&gt;&gt;API: 7b. DataConflictException
+        API--&gt;&gt;Utilisateur: 8b. 409 Conflict { message: "Livre indisponible" }
     else Livre disponible
-        EmpruntService->>LivreRepository: save(livre.setDisponible(false))
-        EmpruntService->>EmpruntRepository: save(newEmprunt)
-        EmpruntRepository-->>EmpruntService: EmpruntDTO
-        EmpruntService-->>EmpruntController: EmpruntDTO
-        EmpruntController-->>Client: 201 Created
+        SVC-&gt;&gt;LREPO: 7c. save(livre.setDisponible(false))
+        activate LREPO
+        LREPO--&gt;&gt;SVC: 8c. LivreDTO (disponible = false)
+        deactivate LREPO
+        SVC-&gt;&gt;EREPO: 9c. save(newEmprunt)
+        activate EREPO
+        EREPO--&gt;&gt;SVC: 10c. EmpruntDTO (statut = EN_COURS)
+        deactivate EREPO
+        SVC--&gt;&gt;API: 11c. EmpruntDTO
+        deactivate SVC
+        API--&gt;&gt;Utilisateur: 12c. 201 Created { empruntDTO }
+        deactivate API
     end
           </pre>
           <div class="notes" hidden>
-            <p>C'est ce diagramme, écrit avant la première ligne de code métier, qui a directement inspiré nos exceptions personnalisées et le test emprunterLivre_devraitEchouer_quandLivreIndisponible qu'on montrera plus loin.</p>
+            <p>L'emprunteur n'est pas envoyé dans la requête : il est lu dans le jeton JWT de l'utilisateur connecté. C'est ce diagramme, écrit avant la première ligne de code métier, qui a inspiré nos exceptions ResourceNotFoundException (404) et DataConflictException (409), et les tests emprunterLivre_devraitEchouer_quandLivreIndisponible, quandUtilisateurInconnu et quandLivreInconnu qu'on montrera plus loin.</p>
           </div>
         </section>
 
@@ -777,32 +831,33 @@ sequenceDiagram
         <section class="slide" data-title="Conception IHM — maquettes" data-eyebrow="Étape 04 — Conception IHM">
           <div class="slide-head">
             <span class="eyebrow-chip">Étape 04 — Conception IHM</span>
-            <h2>11 écrans, <em>pensés par rôle</em></h2>
-            <p class="slide-sub">Avant de coder l'API, on a maquetté le futur client web/mobile — pour valider les parcours utilisateur et administrateur sur les mêmes règles de gestion.</p>
+            <h2>15 écrans, 4 parcours, <em>pensés par rôle</em></h2>
+            <p class="slide-sub">Avant de coder l'API, on a maquetté le futur client web dans Figma : chaque écran est relié par une flèche à l'écran suivant, à son endpoint et aux attributs du diagramme de classes.</p>
           </div>
-          <div class="grid2" style="flex:1">
-            <div class="card">
-              <h4><span class="pill admin">Admin</span> Gestion du catalogue & des comptes</h4>
-              <ul class="checklist">
-                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Liste des livres</li>
-                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Détail / Ajouter / Modifier un livre</li>
-                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Liste des utilisateurs</li>
-                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Ajouter / Modifier un utilisateur</li>
-                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Liste des emprunts</li>
-                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Boîte de dialogue — confirmation de suppression</li>
-              </ul>
-            </div>
-            <div class="card">
-              <h4><span class="pill user">Utilisateur / Admin</span> Emprunts</h4>
-              <ul class="checklist">
-                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Emprunter un livre</li>
-                <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Retourner un livre</li>
-              </ul>
-              <p style="margin-top:16px">Livrable&nbsp;: <code>Conception_IHM_Mediatheque.pdf</code> + prototype HTML interactif — validés avant le début du développement de l'API.</p>
+          <div class="ihm-grid">
+            <figure class="ihm-preview">
+              <div class="browser-chrome">
+                <div class="bb"><i></i><i></i><i></i><span class="url">figma.com — Médiathèque — Maquettes IHM / P2</span></div>
+                <div class="ihm-shot"><img src="../ihm/maquettes/P2_parcours-retour-suivi.png" alt="Planche P2 : l'écran Suivi des emprunts de l'administrateur, dont le bouton Retour mène par une flèche à l'écran Retourner un livre ; sous chaque écran, une note indique le cas d'utilisation, l'endpoint, les attributs UML et les messages."></div>
+              </div>
+              <figcaption><b>Planche P2.</b> Le bouton cliqué est encadré en bleu, la flèche mène à l'écran suivant, et la note jaune indique cas d'utilisation, endpoint, attributs UML et codes HTTP.</figcaption>
+            </figure>
+            <div class="ihm-side">
+              <ol class="ihm-flows">
+                <li><span class="n">P1</span><div><b>Se connecter et emprunter</b><small>Connexion, catalogue, fiche, emprunt</small></div><span class="pill user">Lecteur</span></li>
+                <li><span class="n">P2</span><div><b>Retour et suivi des emprunts</b><small>Suivi des emprunts, retour</small></div><span class="pill admin">Admin</span></li>
+                <li><span class="n">P3</span><div><b>Gérer le catalogue</b><small>Liste, ajout, fiche, modification, suppression</small></div><span class="pill admin">Admin</span></li>
+                <li><span class="n">P4</span><div><b>Gérer les comptes</b><small>Liste, ajout, modification, suppression</small></div><span class="pill admin">Admin</span></li>
+              </ol>
+              <div class="card ihm-deliv">
+                <h4>Livrables</h4>
+                <p><code>Conception_IHM_Mediatheque.pdf</code> (24 pages, une fiche par écran) et les 4 planches PNG dans <code>ihm/maquettes/</code>.</p>
+                <a class="ihm-link" href="https://www.figma.com/design/C9b0QZslewrQHDos2vf7ZK/M%C3%A9diath%C3%A8que-%E2%80%94-Maquettes-IHM?node-id=0-1" target="_blank" rel="noopener">Ouvrir la maquette dans Figma</a>
+              </div>
             </div>
           </div>
           <div class="notes" hidden>
-            <p>On montre que la maquette n'était pas un exercice isolé : les 11 écrans couvrent exactement les mêmes actions que le diagramme de cas d'utilisation vu juste avant.</p>
+            <p>Les 15 écrans couvrent exactement les cas d'utilisation vus juste avant, regroupés en quatre parcours. On montre la planche P2 : l'administrateur clique sur Retour dans le suivi des emprunts et arrive sur l'écran de retour. La note sous chaque écran fait le lien avec l'UML et l'API. Le fichier Figma contient les mêmes planches en calques modifiables.</p>
           </div>
         </section>
 
@@ -1240,7 +1295,7 @@ sequenceDiagram
       theme:'base',
       themeVariables:Object.assign({fontFamily:'"Work Sans", sans-serif', fontSize:'15px'}, mermaidVars),
       flowchart:{useMaxWidth:true},
-      sequence:{useMaxWidth:true, actorMargin:60},
+      sequence:{useMaxWidth:true, actorMargin:60, mirrorActors:false},
       securityLevel:'loose'
     });
     // wait for webfonts to finish loading before measuring/laying out diagram text,
